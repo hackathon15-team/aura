@@ -29,8 +29,9 @@
   - `tabindex="0"` 추가
   - Enter/Space 키보드 이벤트 추가
 - **강조 접근성**
-  - 볼드 텍스트 → `aria-label` 추가
-  - 이탤릭 텍스트 → `aria-label` 추가
+  - 볼드 텍스트 → `data-weally-emphasis="strong"` 추가
+  - 이탤릭 텍스트 → `data-weally-emphasis="em"` 추가
+  - 원본 텍스트 보존 (role="text" 사용 안 함)
 - **이미지**
   - alt 속성 누락 시 OpenAI Vision API로 자동 분석 및 생성
   - 50x50 이상 이미지만 분석 (작은 아이콘 제외)
@@ -68,11 +69,15 @@
   - 100ms debouncing
   - 중복 처리 방지 (WeakSet)
   - 배치 업데이트 (requestAnimationFrame)
+  - 무한 루프 방지 (processingElements/recentlyProcessed)
+  - ARIA 추가 변경 무시 (자체 수정 제외)
+  - 최대 100개 mutation 제한
 - **지원**
   - SPA (Single Page Application)
   - AJAX/Fetch 동적 로딩
   - 무한 스크롤
   - 모달/팝업
+  - React/Vue 프레임워크
 
 ### 5. 팝업 UI
 - **통계**
@@ -169,10 +174,14 @@ npm run type-check # 타입 체크
 
 ## 🚀 성능 최적화
 
+- **단일 패스 DOM 순회**: querySelectorAll('*') 1회만 호출 (이전 2회)
+- **메모리 관리**: WeakSet/WeakMap으로 메모리 누수 방지
+- **이벤트 리스너 관리**: 중복 추가 방지, 가비지 컬렉션 가능
 - **requestAnimationFrame**: 배치 DOM 업데이트
 - **100ms Debouncing**: 과도한 감지 방지
-- **WeakSet**: 중복 처리 방지
+- **getComputedStyle 최적화**: 필요시에만 호출
 - **우선순위 처리**: P0 (긴급) → P1 (중요) → P2 (개선)
+- **Vision API**: 재시도 2회, 지수 백오프, 10초 타임아웃
 
 ## 🎯 WCAG 2.1 준수
 

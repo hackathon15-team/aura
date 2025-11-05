@@ -29,23 +29,30 @@
 - [x] 랜드마크 역할 (navigation, main, banner, etc.)
 
 ### 기술적 개선
-- [x] WeakSet으로 중복 방지
+- [x] WeakSet/WeakMap으로 중복 방지 및 메모리 관리
 - [x] Storage API로 설정 저장
 - [x] 토글 OFF 시 완전 비활성화
 - [x] 페이지 새로고침으로 상태 적용
 - [x] 최대 50개 로그 유지
+- [x] 단일 패스 DOM 순회 (성능 2-3배 향상)
+- [x] 무한 루프 방지 (AccessibilityObserver)
+- [x] 메모리 누수 방지 (이벤트 리스너)
+- [x] OpenAI Vision API 직접 호출 (서버리스)
+- [x] 코드 정리 (주석 제거, 로그 최적화)
 
 ## 📊 프로젝트 통계
 
 ### 코드
-- TypeScript 파일: 11개
-- 총 라인 수: ~2,000줄
-- 빌드 크기: content.js 1.4MB, popup.js 6KB
+- TypeScript 파일: 7개 (정리 완료)
+- 총 라인 수: ~1,800줄 (최적화됨)
+- 빌드 크기: content.js 1.42MB, popup.js 4.92KB
+- 콘솔 로그: 13개 (에러/경고/핵심 정보만)
 
 ### 기능
-- 감지 규칙: 10+ 종류
+- 감지 규칙: 15+ 종류
 - ARIA 속성 자동 추가: 20+ 종류
-- 성능: Debouncing 100ms, requestAnimationFrame
+- 성능: Debouncing 100ms, requestAnimationFrame, 단일 패스 순회
+- Vision API: OpenAI GPT-4o-mini (재시도 2회, 타임아웃 10초)
 
 ## 🎯 최종 상태
 
