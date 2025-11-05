@@ -31,3 +31,9 @@ yarn-error.log*
 
 # Environment
 .env
+
+# JH's Docs
+.jh_docs/
+
+# history
+.history/
