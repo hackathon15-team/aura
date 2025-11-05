@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Web-Ally",
+  "name": "AURA",
   "version": "1.0.0",
   "description": "Automatically detects and fixes web accessibility issues in real-time to improve screen reader compatibility",
   "permissions": [
