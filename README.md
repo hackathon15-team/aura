@@ -103,21 +103,7 @@
 
 ## 📦 설치
 
-### 1. API 키 설정 (선택)
-
-이미지 alt 텍스트 자동 생성을 사용하려면 OpenAI API 키가 필요합니다:
-
-```bash
-# .env.example을 .env로 복사
-cp .env.example .env
-
-# .env 파일에 OpenAI API 키 설정
-VITE_OPENAI_API_KEY=your_openai_api_key_here
-```
-
-**참고:** API 키 없이도 확장 프로그램은 동작하지만, 이미지 alt 텍스트는 파일명 기반 폴백만 사용됩니다.
-
-### 2. 확장 프로그램 빌드
+### 1. 확장 프로그램 빌드
 
 ```bash
 git clone <repository-url>
@@ -126,7 +112,7 @@ npm install
 npm run build
 ```
 
-### 3. Chrome에 로드
+### 2. Chrome에 로드
 
 1. `chrome://extensions/` 열기
 2. "개발자 모드" 활성화

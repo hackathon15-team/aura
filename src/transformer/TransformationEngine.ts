@@ -16,17 +16,13 @@ export interface TransformationLog {
 export class TransformationEngine {
   private transformedElements = new WeakSet<HTMLElement>();
 
-  // Track keyboard event handlers to prevent memory leaks
   private keyboardHandlers = new WeakMap<HTMLElement, (event: KeyboardEvent) => void>();
-
-  // OpenAI Vision API configuration
   private readonly OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
   private readonly OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
   private readonly VISION_API_TIMEOUT = 10000;
   private readonly VISION_API_RETRIES = 2;
 
   async transform(issue: AccessibilityIssue): Promise<TransformationLog | null> {
-    // Prevent duplicate transformations
     if (this.transformedElements.has(issue.element)) {
       return null;
     }
@@ -206,12 +202,10 @@ export class TransformationEngine {
     else if (img.title) {
       altText = img.title;
     }
-    // Try Vision API for actual image analysis
     else if (img.src) {
-      // Wait for image to load if not loaded yet (with shorter timeout)
       if (!img.complete) {
         await new Promise((resolve) => {
-          const timeout = setTimeout(resolve, 1500); // Reduced from 3000ms
+          const timeout = setTimeout(resolve, 1500);
           img.onload = () => {
             clearTimeout(timeout);
             resolve(null);
@@ -224,7 +218,6 @@ export class TransformationEngine {
       }
 
       try {
-        // Skip data URLs and very small images (likely icons/decorative)
         if (!img.src.startsWith('data:') && img.naturalWidth > 50 && img.naturalHeight > 50) {
           altText = await this.analyzeImageWithVision(img.src);
         }
@@ -233,7 +226,6 @@ export class TransformationEngine {
       }
     }
 
-    // Fallback to filename if Vision API failed
     if (!altText && img.src) {
       const filename = img.src.split('/').pop()?.split('.')[0] || '';
       if (filename && !filename.match(/^\d+$/) && filename.length < 50) {
