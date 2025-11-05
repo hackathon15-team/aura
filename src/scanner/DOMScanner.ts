@@ -92,7 +92,8 @@ export class DOMScanner {
       // Check clickable elements (non-semantic buttons)
       const isClickable = this.isElementClickable(element);
       if (isClickable) {
-        if (tagName !== 'button' && tagName !== 'a' && !element.hasAttribute('role')) {
+        const isValidClickableElement = ['div', 'span', 'section', 'article', 'li'].includes(tagName);
+        if (isValidClickableElement && !element.hasAttribute('role')) {
           issues.push({
             element,
             type: IssueType.NON_SEMANTIC_BUTTON,
@@ -208,17 +209,16 @@ export class DOMScanner {
     // React: Check for data attributes or event handlers
     const hasReactProps = Object.keys(element).some(key => key.startsWith('__react'));
     if (hasReactProps) {
-      // React elements often have cursor:pointer
       const computed = window.getComputedStyle(element);
       if (computed.cursor === 'pointer') return true;
     }
 
-    // Heuristic: cursor:pointer + not a link/button
-    const computed = window.getComputedStyle(element);
-    if (computed.cursor === 'pointer' &&
-        element.tagName.toLowerCase() !== 'a' &&
-        element.tagName.toLowerCase() !== 'button') {
-      return true;
+    // Heuristic: cursor:pointer on container elements only
+    const tagName = element.tagName.toLowerCase();
+    const isContainer = ['div', 'span', 'section', 'article', 'li'].includes(tagName);
+    if (isContainer) {
+      const computed = window.getComputedStyle(element);
+      if (computed.cursor === 'pointer') return true;
     }
 
     return false;

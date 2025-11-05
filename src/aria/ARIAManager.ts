@@ -46,17 +46,18 @@ export class ARIAManager {
 
     
     const dialogSelectors = [
-      '[class*="modal"]',
-      '[class*="dialog"]',
-      '[class*="popup"]',
-      '[class*="overlay"]'
+      '[class*="modal"]:not([class*="backdrop"]):not([class*="overlay"])',
+      '[class*="dialog"][class*="content"]',
+      '[class*="popup"][class*="content"]',
     ].join(', ');
 
     const dialogs = root.querySelectorAll(dialogSelectors);
     dialogs.forEach(el => {
       if (el instanceof HTMLElement && !el.hasAttribute('role')) {
         const style = window.getComputedStyle(el);
-        if (style.position === 'fixed' || style.position === 'absolute') {
+        const text = el.textContent?.trim() || '';
+        const hasContent = text.length > 50;
+        if ((style.position === 'fixed' || style.position === 'absolute') && hasContent) {
           el.setAttribute('role', 'dialog');
           el.setAttribute('aria-modal', 'true');
           count += 2;
@@ -65,11 +66,18 @@ export class ARIAManager {
     });
 
     
-    const searchForms = root.querySelectorAll('form[class*="search"], form[id*="search"]');
-    searchForms.forEach(el => {
+    const searchWrappers = root.querySelectorAll(
+      'div[class*="search"]:not(form), section[class*="search"]:not(form), ' +
+      'div[id*="search"]:not(form), section[id*="search"]:not(form)'
+    );
+    searchWrappers.forEach(el => {
       if (el instanceof HTMLElement && !el.hasAttribute('role')) {
-        el.setAttribute('role', 'search');
-        count++;
+        const hasForm = el.querySelector('form');
+        const hasInput = el.querySelector('input[type="search"], input[type="text"]');
+        if (hasForm || hasInput) {
+          el.setAttribute('role', 'search');
+          count++;
+        }
       }
     });
 
@@ -80,8 +88,10 @@ export class ARIAManager {
     buttonLikeElements.forEach(el => {
       if (el instanceof HTMLElement &&
           el.tagName.toLowerCase() !== 'button' &&
+          el.tagName.toLowerCase() !== 'a' &&
+          el.tagName.toLowerCase() !== 'input' &&
           !el.hasAttribute('role') &&
-          (el.hasAttribute('onclick') || el.style.cursor === 'pointer')) {
+          el.hasAttribute('onclick')) {
         el.setAttribute('role', 'button');
         count++;
       }
