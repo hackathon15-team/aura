@@ -98,6 +98,9 @@ class AURA {
     const issues = await this.scanner.scan(document.body);
     this.stats.issuesFound += issues.length;
 
+    console.log('[AURA] Found issues:', issues.length);
+    console.log('[AURA] Issue types:', issues.map(i => i.type));
+
     let fixedCount = 0;
     for (const issue of issues) {
       try {

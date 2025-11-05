@@ -35,7 +35,9 @@ export class TransformationEngine {
           break;
 
         case IssueType.MISSING_ALT_TEXT:
+          console.log('[TransformationEngine] Processing missing alt text for:', issue.element);
           log = await this.addAltText(issue.element as HTMLImageElement);
+          console.log('[TransformationEngine] Alt text processing complete, log:', log);
           break;
 
         case IssueType.MISSING_KEYBOARD_ACCESS:
@@ -77,6 +79,11 @@ export class TransformationEngine {
     // Skip if already semantic
     if (tagName === 'button' || tagName === 'a') {
       return null;
+    }
+
+    // If it's an image, also add alt text
+    if (tagName === 'img' && !element.hasAttribute('alt')) {
+      await this.addAltText(element as HTMLImageElement);
     }
 
     const before = `<${tagName}> (클릭 가능하지만 버튼 역할 없음)`;
@@ -189,14 +196,28 @@ export class TransformationEngine {
       altText = img.title;
     }
     // Try Vision API for actual image analysis
-    else if (img.src && img.complete && img.naturalWidth > 0) {
+    else if (img.src) {
+      // Wait for image to load if not loaded yet
+      if (!img.complete) {
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+          // Timeout after 3 seconds
+          setTimeout(resolve, 3000);
+        });
+      }
+
       try {
         // Skip data URLs and very small images (likely icons/decorative)
         if (!img.src.startsWith('data:') && img.naturalWidth > 50 && img.naturalHeight > 50) {
+          console.log('[TransformationEngine] Analyzing image with Vision API:', img.src);
           altText = await this.analyzeImageWithVision(img.src);
+          console.log('[TransformationEngine] Vision API result:', altText);
+        } else {
+          console.log('[TransformationEngine] Skipping image (too small or data URL):', img.naturalWidth, 'x', img.naturalHeight);
         }
       } catch (error) {
-        console.log('[TransformationEngine] Vision API failed, using fallback');
+        console.log('[TransformationEngine] Vision API failed, using fallback:', error);
       }
     }
 
