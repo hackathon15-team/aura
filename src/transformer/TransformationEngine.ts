@@ -88,19 +88,16 @@ export class TransformationEngine {
     const before = `<${tagName}> (클릭 가능하지만 버튼 역할 없음)`;
     const modifications: string[] = [];
 
-    // Add button role for screen readers
     if (!element.hasAttribute('role')) {
       element.setAttribute('role', 'button');
       modifications.push('role="button"');
     }
 
-    // Make keyboard accessible
     if (!element.hasAttribute('tabindex')) {
       element.tabIndex = 0;
       modifications.push('tabindex="0"');
     }
 
-    // Add keyboard event handler if not already present
     if (!this.keyboardHandlers.has(element)) {
       const handler = (event: KeyboardEvent) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -113,7 +110,6 @@ export class TransformationEngine {
       modifications.push('키보드 이벤트');
     }
 
-    // Add accessible label if missing
     let label = '';
     if (!element.hasAttribute('aria-label') && !element.hasAttribute('aria-labelledby')) {
       const text = element.textContent?.trim();
@@ -121,6 +117,9 @@ export class TransformationEngine {
         element.setAttribute('aria-label', text);
         label = text.slice(0, 20);
         modifications.push(`aria-label="${label}${text.length > 20 ? '...' : ''}"`);
+      } else {
+        element.setAttribute('aria-label', 'button');
+        modifications.push('aria-label="button"');
       }
     }
 

@@ -103,16 +103,19 @@ export class ARIAManager {
       if (!(el instanceof HTMLElement)) return;
       if (this.processedElements.has(el)) return;
 
-      // Skip if already has label
       if (el.hasAttribute('aria-label') ||
           el.hasAttribute('aria-labelledby') ||
           el.getAttribute('title')) {
         return;
       }
 
-      // Try to infer label
+      const textContent = el.textContent?.trim();
+      if (textContent && textContent.length > 0 && textContent.length < 100) {
+        return;
+      }
+
       const label = this.inferLabel(el);
-      if (label) {
+      if (label && label.length > 0 && label.length < 100) {
         el.setAttribute('aria-label', label);
         this.processedElements.add(el);
         count++;
@@ -137,6 +140,13 @@ export class ARIAManager {
     expandables.forEach(el => {
       if (!(el instanceof HTMLElement)) return;
       if (el.hasAttribute('aria-expanded')) return;
+
+      const role = el.getAttribute('role');
+      const validRoles = ['button', 'link', 'menuitem', 'tab', 'treeitem', 'combobox'];
+      const tagName = el.tagName.toLowerCase();
+      const isValidElement = tagName === 'button' || tagName === 'a' || validRoles.includes(role || '');
+
+      if (!isValidElement) return;
 
       const isExpanded = DOMUtils.isVisible(el);
       el.setAttribute('aria-expanded', String(isExpanded));
@@ -169,7 +179,8 @@ export class ARIAManager {
       if (el.hasAttribute('aria-selected')) return;
 
       const role = el.getAttribute('role');
-      if (role === 'tab' || role === 'option' || role === 'menuitem') {
+      const validRoles = ['option', 'tab', 'gridcell', 'row', 'treeitem'];
+      if (validRoles.includes(role || '')) {
         el.setAttribute('aria-selected', 'true');
         count++;
       }
