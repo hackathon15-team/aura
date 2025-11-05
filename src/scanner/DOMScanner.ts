@@ -60,17 +60,17 @@ export class DOMScanner {
   }
 
   private deduplicateIssues(issues: AccessibilityIssue[]): AccessibilityIssue[] {
-    const seen = new Map<string, AccessibilityIssue>();
+    const seen = new Set<HTMLElement>();
+    const uniqueIssues: AccessibilityIssue[] = [];
 
     for (const issue of issues) {
-      // Use element + type as unique key
-      const key = `${issue.element.tagName}-${issue.element.className}-${issue.type}`;
-      if (!seen.has(key)) {
-        seen.set(key, issue);
+      if (!seen.has(issue.element)) {
+        seen.add(issue.element);
+        uniqueIssues.push(issue);
       }
     }
 
-    return Array.from(seen.values());
+    return uniqueIssues;
   }
 
   /**
@@ -273,7 +273,6 @@ export class DOMScanner {
   private scanStructuralIssues(root: HTMLElement): AccessibilityIssue[] {
     const issues: AccessibilityIssue[] = [];
 
-    // Check images for missing/empty alt text
     const images = root.querySelectorAll('img');
     images.forEach((img) => {
       if (!img.hasAttribute('alt')) {
@@ -284,7 +283,6 @@ export class DOMScanner {
           description: 'Image missing alt attribute',
         });
       } else if (img.getAttribute('alt') === '' && img.naturalWidth > 50) {
-        // Empty alt on non-decorative images (larger than 50px)
         issues.push({
           element: img,
           type: IssueType.MISSING_ALT_TEXT,

@@ -183,18 +183,15 @@ export class TransformationEngine {
    * Add alt text to images using Vision API
    */
   private async addAltText(img: HTMLImageElement): Promise<TransformationLog | null> {
-    // Don't modify if already has alt (even if empty - empty means decorative)
     if (img.hasAttribute('alt')) {
       return null;
     }
 
     let altText = '';
 
-    // Check for aria-label first
     if (img.getAttribute('aria-label')) {
       altText = img.getAttribute('aria-label')!;
     }
-    // Check for title attribute
     else if (img.title) {
       altText = img.title;
     }
@@ -216,9 +213,12 @@ export class TransformationEngine {
       try {
         if (!img.src.startsWith('data:') && img.naturalWidth > 50 && img.naturalHeight > 50) {
           altText = await this.analyzeImageWithVision(img.src);
+          if (altText) {
+            console.log('[AURA] Generated alt text for image:', altText.substring(0, 50));
+          }
         }
       } catch (error) {
-        console.warn('[TransformationEngine] Vision API failed:', error);
+        console.warn('[TransformationEngine] Vision API error:', error);
       }
     }
 

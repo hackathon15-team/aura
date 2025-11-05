@@ -98,7 +98,8 @@ class AURA {
     const issues = await this.scanner.scan(document.body);
     this.stats.issuesFound += issues.length;
 
-    console.log(`[AURA] Scan complete: ${issues.length} issues found`);
+    const imageIssues = issues.filter(i => i.type === 'missing-alt-text');
+    console.log(`[AURA] Scan complete: ${issues.length} issues found${imageIssues.length > 0 ? ` (${imageIssues.length} images)` : ''}`);
 
     for (const issue of issues) {
       try {
