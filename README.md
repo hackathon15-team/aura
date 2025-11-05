@@ -32,7 +32,9 @@
   - 볼드 텍스트 → `aria-label` 추가
   - 이탤릭 텍스트 → `aria-label` 추가
 - **이미지**
-  - alt 속성 누락 시 자동 생성 (파일명 기반)
+  - alt 속성 누락 시 OpenAI Vision API로 자동 분석 및 생성
+  - 50x50 이상 이미지만 분석 (작은 아이콘 제외)
+  - Vision API 실패 시 파일명으로 폴백
 - **폼**
   - placeholder나 인접 텍스트로 `aria-label` 생성
 - **키보드**
@@ -101,7 +103,19 @@
 
 ## 📦 설치
 
-### 1. 빌드
+### 1. Vision API 서버 (선택)
+
+이미지 alt 텍스트 자동 생성을 사용하려면:
+
+```bash
+cd server
+npm install
+cp .env.example .env
+# .env에 OPENAI_API_KEY 설정
+npm start
+```
+
+### 2. 확장 프로그램 빌드
 
 ```bash
 git clone <repository-url>
@@ -110,7 +124,7 @@ npm install
 npm run build
 ```
 
-### 2. Chrome에 로드
+### 3. Chrome에 로드
 
 1. `chrome://extensions/` 열기
 2. "개발자 모드" 활성화
