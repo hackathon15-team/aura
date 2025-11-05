@@ -19,7 +19,6 @@ export class ARIAManager {
   private applyRoles(root: HTMLElement): number {
     let count = 0;
 
-    
     const navElements = root.querySelectorAll(
       '[class~="nav"]:not(nav), [class~="navbar"]:not(nav), [class~="navigation"]:not(nav), ' +
       '[id="nav"]:not(nav), [id="navbar"]:not(nav), [id="navigation"]:not(nav)'
@@ -35,7 +34,6 @@ export class ARIAManager {
       }
     });
 
-    
     const mainElements = root.querySelectorAll(
       '[class~="main"]:not(main), [class~="main-content"]:not(main), ' +
       '[id="main"]:not(main), [id="main-content"]:not(main), [id="content"]:not(main)'
@@ -83,7 +81,8 @@ export class ARIAManager {
     buttonLikeElements.forEach(el => {
       if (el instanceof HTMLElement &&
           el.tagName.toLowerCase() !== 'button' &&
-          !el.hasAttribute('role')) {
+          !el.hasAttribute('role') &&
+          (el.hasAttribute('onclick') || el.style.cursor === 'pointer')) {
         el.setAttribute('role', 'button');
         count++;
       }
@@ -103,18 +102,26 @@ export class ARIAManager {
       if (!(el instanceof HTMLElement)) return;
       if (this.processedElements.has(el)) return;
 
-      if (el.hasAttribute('aria-label') ||
-          el.hasAttribute('aria-labelledby') ||
-          el.getAttribute('title')) {
+      if (el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby')) {
         return;
       }
 
       const textContent = el.textContent?.trim();
-      if (textContent && textContent.length > 0 && textContent.length < 100) {
+      const title = el.getAttribute('title');
+      const hasVisibleContent = textContent && textContent.length > 0 && textContent.length < 100;
+      const hasImage = el.querySelector('img[alt]');
+
+      if (hasVisibleContent || hasImage) {
         return;
       }
 
-      const label = this.inferLabel(el);
+      let label = '';
+      if (title && title.trim()) {
+        label = title.trim();
+      } else {
+        label = this.inferLabel(el);
+      }
+
       if (label && label.length > 0 && label.length < 100) {
         el.setAttribute('aria-label', label);
         this.processedElements.add(el);
@@ -142,9 +149,9 @@ export class ARIAManager {
       if (el.hasAttribute('aria-expanded')) return;
 
       const role = el.getAttribute('role');
-      const validRoles = ['button', 'link', 'menuitem', 'tab', 'treeitem', 'combobox'];
+      const validRoles = ['button', 'menuitem', 'tab', 'treeitem', 'combobox'];
       const tagName = el.tagName.toLowerCase();
-      const isValidElement = tagName === 'button' || tagName === 'a' || validRoles.includes(role || '');
+      const isValidElement = tagName === 'button' || validRoles.includes(role || '');
 
       if (!isValidElement) return;
 
