@@ -20,7 +20,7 @@ interface AccessibilityStats {
   logs: ModificationLog[];
 }
 
-class WebAlly {
+class AURA {
   private scanner: DOMScanner;
   private transformer: TransformationEngine;
   private ariaManager: ARIAManager;
@@ -155,7 +155,7 @@ class WebAlly {
 
 }
 
-let webAllyInstance: WebAlly | null = null;
+let auraInstance: AURA | null = null;
 
 chrome.storage.local.get(['enabled'], (result) => {
   const enabled = result.enabled !== undefined ? result.enabled : true;
@@ -163,14 +163,14 @@ chrome.storage.local.get(['enabled'], (result) => {
   if (enabled) {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
-        webAllyInstance = new WebAlly(true);
-        webAllyInstance.initialize();
+        auraInstance = new AURA(true);
+        auraInstance.initialize();
       });
     } else {
-      webAllyInstance = new WebAlly(true);
-      webAllyInstance.initialize();
+      auraInstance = new AURA(true);
+      auraInstance.initialize();
     }
   } else {
-    webAllyInstance = new WebAlly(false);
+    auraInstance = new AURA(false);
   }
 });
