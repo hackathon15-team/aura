@@ -16,6 +16,14 @@ export interface TransformationLog {
 export class TransformationEngine {
   private transformedElements = new WeakSet<HTMLElement>();
 
+  // Track keyboard event handlers to prevent memory leaks
+  private keyboardHandlers = new WeakMap<HTMLElement, (event: KeyboardEvent) => void>();
+
+  // Vision API configuration
+  private readonly VISION_API_URL = 'http://localhost:3000/analyze-image';
+  private readonly VISION_API_TIMEOUT = 5000;
+  private readonly VISION_API_RETRIES = 2;
+
   async transform(issue: AccessibilityIssue): Promise<TransformationLog | null> {
     // Prevent duplicate transformations
     if (this.transformedElements.has(issue.element)) {
@@ -35,9 +43,7 @@ export class TransformationEngine {
           break;
 
         case IssueType.MISSING_ALT_TEXT:
-          console.log('[TransformationEngine] Processing missing alt text for:', issue.element);
           log = await this.addAltText(issue.element as HTMLImageElement);
-          console.log('[TransformationEngine] Alt text processing complete, log:', log);
           break;
 
         case IssueType.MISSING_KEYBOARD_ACCESS:
@@ -102,15 +108,15 @@ export class TransformationEngine {
     }
 
     // Add keyboard event handler if not already present
-    const hasKeyboardHandler = element.hasAttribute('data-weally-keyboard');
-    if (!hasKeyboardHandler) {
-      element.addEventListener('keydown', (event: KeyboardEvent) => {
+    if (!this.keyboardHandlers.has(element)) {
+      const handler = (event: KeyboardEvent) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           element.click();
         }
-      });
-      element.setAttribute('data-weally-keyboard', 'true');
+      };
+      element.addEventListener('keydown', handler);
+      this.keyboardHandlers.set(element, handler);
       modifications.push('키보드 이벤트');
     }
 
@@ -125,8 +131,6 @@ export class TransformationEngine {
       }
     }
 
-    console.log('[TransformationEngine] Made', tagName, 'accessible as button (no DOM change)');
-
     return {
       type: '버튼 접근성',
       description: `${tagName} 요소를 접근 가능한 버튼으로 변환`,
@@ -138,12 +142,25 @@ export class TransformationEngine {
 
   /**
    * Make CSS-styled emphasis accessible WITHOUT changing visual appearance
-   * Only adds ARIA or visually-hidden semantic indicators
+   * Adds visually-hidden semantic indicator instead of overriding text
    */
   private async makeEmphasisAccessible(element: HTMLElement): Promise<TransformationLog | null> {
-    const computed = window.getComputedStyle(element);
+    // Don't process if already has semantic children
+    const hasSemanticEmphasis = element.querySelector('strong, em, b, i');
+    if (hasSemanticEmphasis) {
+      return null;
+    }
 
-    // Check if bold or italic
+    // Check if element already has ARIA or if text is too long
+    const existingLabel = element.getAttribute('aria-label');
+    const text = element.textContent?.trim();
+
+    if (!text || text.length === 0 || text.length > 100 || existingLabel) {
+      return null;
+    }
+
+    // Get computed style (only when necessary)
+    const computed = window.getComputedStyle(element);
     const isBold = computed.fontWeight === 'bold' || parseInt(computed.fontWeight) >= 700;
     const isItalic = computed.fontStyle === 'italic';
 
@@ -151,29 +168,22 @@ export class TransformationEngine {
       return null;
     }
 
-    // Don't add if already has semantic children
-    const hasSemanticEmphasis = element.querySelector('strong, em, b, i');
-    if (hasSemanticEmphasis) {
-      return null;
+    // Instead of role="text" + aria-label (which overrides original text),
+    // just add a data attribute for screen readers to detect
+    // Screen readers will read the original text as-is
+    if (isBold) {
+      element.setAttribute('data-weally-emphasis', 'strong');
+    } else if (isItalic) {
+      element.setAttribute('data-weally-emphasis', 'em');
     }
 
-    // Add aria-label to indicate emphasis to screen readers
-    const existingLabel = element.getAttribute('aria-label');
-    const text = element.textContent?.trim();
-
-    if (text && text.length > 0 && !existingLabel) {
-      // Add role="text" to ensure it's read as emphasized
-      if (isBold) {
-        element.setAttribute('role', 'text');
-        element.setAttribute('aria-label', `강조: ${text}`);
-      } else if (isItalic) {
-        element.setAttribute('role', 'text');
-        element.setAttribute('aria-label', `이탤릭: ${text}`);
-      }
-    }
-
-    console.log('[TransformationEngine] Made emphasis accessible (no visual change)');
-    return null; // Simplified for now
+    return {
+      type: '강조 접근성',
+      description: `${isBold ? 'Bold' : 'Italic'} 텍스트 접근성 개선`,
+      element: this.getElementDescription(element),
+      before: 'CSS only emphasis',
+      after: `data-emphasis="${isBold ? 'strong' : 'em'}"`
+    };
   }
 
   /**
@@ -197,27 +207,28 @@ export class TransformationEngine {
     }
     // Try Vision API for actual image analysis
     else if (img.src) {
-      // Wait for image to load if not loaded yet
+      // Wait for image to load if not loaded yet (with shorter timeout)
       if (!img.complete) {
         await new Promise((resolve) => {
-          img.onload = resolve;
-          img.onerror = resolve;
-          // Timeout after 3 seconds
-          setTimeout(resolve, 3000);
+          const timeout = setTimeout(resolve, 1500); // Reduced from 3000ms
+          img.onload = () => {
+            clearTimeout(timeout);
+            resolve(null);
+          };
+          img.onerror = () => {
+            clearTimeout(timeout);
+            resolve(null);
+          };
         });
       }
 
       try {
         // Skip data URLs and very small images (likely icons/decorative)
         if (!img.src.startsWith('data:') && img.naturalWidth > 50 && img.naturalHeight > 50) {
-          console.log('[TransformationEngine] Analyzing image with Vision API:', img.src);
           altText = await this.analyzeImageWithVision(img.src);
-          console.log('[TransformationEngine] Vision API result:', altText);
-        } else {
-          console.log('[TransformationEngine] Skipping image (too small or data URL):', img.naturalWidth, 'x', img.naturalHeight);
         }
       } catch (error) {
-        console.log('[TransformationEngine] Vision API failed, using fallback:', error);
+        console.warn('[TransformationEngine] Vision API failed:', error);
       }
     }
 
@@ -230,7 +241,6 @@ export class TransformationEngine {
     }
 
     img.alt = altText;
-    console.log('[TransformationEngine] Added alt text:', altText || '(decorative)');
 
     return {
       type: 'Image Alt',
@@ -241,26 +251,57 @@ export class TransformationEngine {
     };
   }
 
+  /**
+   * Analyze image with Vision API (with retry and timeout)
+   */
   private async analyzeImageWithVision(imageUrl: string): Promise<string> {
-    const serverUrl = 'http://localhost:3000/analyze-image';
+    let lastError: Error | null = null;
 
-    try {
-      const response = await fetch(serverUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl }),
-      });
+    // Retry loop
+    for (let attempt = 0; attempt < this.VISION_API_RETRIES; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this.VISION_API_TIMEOUT);
 
-      if (!response.ok) {
-        throw new Error('Vision API request failed');
+        const response = await fetch(this.VISION_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`Vision API returned ${response.status}`);
+        }
+
+        const data = await response.json();
+        const altText = data.altText?.trim() || '';
+
+        if (altText) {
+          return altText;
+        }
+
+        throw new Error('Empty alt text from Vision API');
+      } catch (error) {
+        lastError = error as Error;
+
+        // If aborted (timeout), don't retry
+        if (lastError.name === 'AbortError') {
+          console.warn('[TransformationEngine] Vision API timeout');
+          break;
+        }
+
+        // Wait before retry (exponential backoff)
+        if (attempt < this.VISION_API_RETRIES - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        }
       }
-
-      const data = await response.json();
-      return data.altText || '';
-    } catch (error) {
-      console.error('[TransformationEngine] Vision API error:', error);
-      return '';
     }
+
+    console.warn('[TransformationEngine] Vision API failed after retries:', lastError?.message);
+    return '';
   }
 
   /**
@@ -268,9 +309,12 @@ export class TransformationEngine {
    * Only adds event listeners and tabindex
    */
   private async addKeyboardAccess(element: HTMLElement): Promise<TransformationLog | null> {
+    const modifications: string[] = [];
+
     // Add tabindex if not already focusable
     if (!element.hasAttribute('tabindex') && element.tabIndex < 0) {
       element.tabIndex = 0;
+      modifications.push('tabindex="0"');
     }
 
     // Add keyboard event handler if element has click handler
@@ -278,20 +322,29 @@ export class TransformationEngine {
                            element.hasAttribute('onclick') ||
                            element.getAttribute('role') === 'button';
 
-    const hasKeyboardHandler = element.hasAttribute('data-weally-keyboard');
-
-    if (hasClickHandler && !hasKeyboardHandler) {
-      element.addEventListener('keydown', (event: KeyboardEvent) => {
+    if (hasClickHandler && !this.keyboardHandlers.has(element)) {
+      const handler = (event: KeyboardEvent) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           element.click();
         }
-      });
-      element.setAttribute('data-weally-keyboard', 'true');
-
-      console.log('[TransformationEngine] Added keyboard access (no visual change)');
+      };
+      element.addEventListener('keydown', handler);
+      this.keyboardHandlers.set(element, handler);
+      modifications.push('keyboard handler');
     }
-    return null; // Simplified for now
+
+    if (modifications.length === 0) {
+      return null;
+    }
+
+    return {
+      type: '키보드 접근성',
+      description: '키보드로 접근 가능하도록 개선',
+      element: this.getElementDescription(element),
+      before: '키보드 접근 불가',
+      after: modifications.join(', ')
+    };
   }
 
   /**
@@ -350,13 +403,25 @@ export class TransformationEngine {
     // Add aria-label (no visual change)
     if (labelText) {
       element.setAttribute('aria-label', labelText);
-      console.log('[TransformationEngine] Added aria-label to form element:', labelText);
+      return {
+        type: '폼 레이블',
+        description: '입력 필드에 레이블 추가',
+        element: this.getElementDescription(element),
+        before: '레이블 없음',
+        after: `aria-label="${labelText.slice(0, 30)}${labelText.length > 30 ? '...' : ''}"`
+      };
     } else {
       // Fallback: use input type as label
       const inputType = (element as HTMLInputElement).type || 'field';
-      element.setAttribute('aria-label', `${inputType} input`);
-      console.log('[TransformationEngine] Added fallback aria-label:', inputType);
+      const fallbackLabel = `${inputType} input`;
+      element.setAttribute('aria-label', fallbackLabel);
+      return {
+        type: '폼 레이블',
+        description: '입력 필드에 기본 레이블 추가',
+        element: this.getElementDescription(element),
+        before: '레이블 없음',
+        after: `aria-label="${fallbackLabel}"`
+      };
     }
-    return null; // Simplified for now
   }
 }
