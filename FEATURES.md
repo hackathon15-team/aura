@@ -1,0 +1,22 @@
+# AURA 구현 기능
+
+- axe-core로 WCAG 2.1 위반 자동 감지
+- onclick 있는 div/span에 role="button" + tabindex="0" + Enter/Space 키보드 이벤트 추가
+- CSS bold/italic 요소에 aria-label 추가
+- 이미지 alt 누락 시 파일명으로 자동 생성
+- 폼 요소에 aria-label 추가 (placeholder/인접 텍스트 활용)
+- nav 요소에 role="navigation" 추가
+- main 요소에 role="main" 추가
+- modal/popup에 role="dialog" + aria-modal="true" 추가
+- 검색 폼에 role="search" 추가
+- 버튼 모양 요소에 role="button" 추가
+- banner/header에 role="banner" 추가
+- footer에 role="contentinfo" 추가
+- aside에 role="complementary" 추가
+- 드롭다운/아코디언에 aria-expanded 추가
+- 체크박스 스타일 요소에 aria-checked 추가
+- 선택 가능 항목에 aria-selected 추가
+- 팝업 트리거에 aria-haspopup 추가
+- 제어 관계에 aria-controls 추가
+- MutationObserver로 동적 콘텐츠 실시간 감지 및 처리
+- SPA/AJAX/무한스크롤 지원
