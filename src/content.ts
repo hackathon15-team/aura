@@ -76,15 +76,15 @@ class AURA {
   }
 
   async initialize(): Promise<void> {
-    if (this.initialized) return;
-    if (!this.enabled) return;
+    if (this.initialized || !this.enabled) return;
 
     try {
       await this.scanAndTransform();
       this.observer.start();
       this.initialized = true;
+      console.log('[AURA] Initialized successfully');
     } catch (error) {
-      console.error('[Web-Ally] Initialization failed:', error);
+      console.error('[AURA] Initialization failed:', error);
     }
   }
 
@@ -98,23 +98,17 @@ class AURA {
     const issues = await this.scanner.scan(document.body);
     this.stats.issuesFound += issues.length;
 
-    console.log('[AURA] Found issues:', issues.length);
-    console.log('[AURA] Issue types:', issues.map(i => i.type));
+    console.log(`[AURA] Scan complete: ${issues.length} issues found`);
 
-    let fixedCount = 0;
     for (const issue of issues) {
       try {
         const log = await this.transformer.transform(issue);
         if (log) {
-          this.addLog({
-            timestamp: Date.now(),
-            ...log
-          });
-          fixedCount++;
+          this.addLog({ timestamp: Date.now(), ...log });
           this.stats.issuesFixed++;
         }
       } catch (error) {
-        console.error('[Web-Ally] Transformation failed:', error);
+        console.error('[AURA] Transform error:', error);
       }
     }
 
@@ -128,6 +122,7 @@ class AURA {
         before: 'ARIA 속성 누락',
         after: `${ariaCount}개 속성 추가됨`
       });
+      console.log(`[AURA] Applied ${ariaCount} ARIA attributes`);
     }
     this.stats.ariaAttributesAdded += ariaCount;
     this.stats.lastUpdated = Date.now();

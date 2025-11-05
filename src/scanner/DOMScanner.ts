@@ -1,8 +1,3 @@
-/**
- * DOMScanner - Comprehensive DOM analysis for accessibility issues
- * Detects all WCAG 2.1 violations and semantic HTML issues
- */
-
 import axe from 'axe-core';
 
 export interface AccessibilityIssue {
@@ -14,38 +9,27 @@ export interface AccessibilityIssue {
 }
 
 export enum IssueType {
-  // Semantic HTML
   NON_SEMANTIC_BUTTON = 'non-semantic-button',
   NON_SEMANTIC_LINK = 'non-semantic-link',
   NON_SEMANTIC_EMPHASIS = 'non-semantic-emphasis',
-
-  // ARIA
   MISSING_ARIA_LABEL = 'missing-aria-label',
   MISSING_ARIA_ROLE = 'missing-aria-role',
   MISSING_ARIA_STATE = 'missing-aria-state',
-
-  // Structure
   MISSING_LANDMARK = 'missing-landmark',
   INCORRECT_HEADING_LEVEL = 'incorrect-heading-level',
   MISSING_ALT_TEXT = 'missing-alt-text',
-
-  // Keyboard
   MISSING_KEYBOARD_ACCESS = 'missing-keyboard-access',
   KEYBOARD_TRAP = 'keyboard-trap',
-
-  // Color/Contrast
   LOW_CONTRAST = 'low-contrast',
   COLOR_ONLY_INDICATION = 'color-only-indication',
-
-  // Forms
   UNLABELED_FORM_ELEMENT = 'unlabeled-form-element',
   MISSING_FORM_VALIDATION = 'missing-form-validation',
 }
 
 export enum Priority {
-  P0 = 0, // Critical - breaks screen reader
-  P1 = 1, // Important - degrades experience
-  P2 = 2, // Nice to have - minor improvement
+  P0 = 0,
+  P1 = 1,
+  P2 = 2,
 }
 
 export class DOMScanner {

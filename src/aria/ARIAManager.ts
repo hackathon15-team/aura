@@ -1,7 +1,3 @@
-/**
- * ARIAManager - Comprehensive ARIA attribute management
- * Automatically adds all missing ARIA attributes based on context
- */
 
 import { DOMUtils } from '../utils/DOMUtils';
 
@@ -11,29 +7,19 @@ export class ARIAManager {
   async applyARIA(root: HTMLElement): Promise<number> {
     let count = 0;
 
-    // Apply ARIA roles
     count += this.applyRoles(root);
-
-    // Apply ARIA labels
     count += this.applyLabels(root);
-
-    // Apply ARIA states
     count += this.applyStates(root);
-
-    // Apply ARIA properties
     count += this.applyProperties(root);
-
-    // Apply landmark roles
     count += this.applyLandmarks(root);
 
-    console.log(`[ARIAManager] Added ${count} ARIA attributes`);
     return count;
   }
 
   private applyRoles(root: HTMLElement): number {
     let count = 0;
 
-    // Navigation (exclude HTML5 <nav> - already has implicit role)
+    
     const navElements = root.querySelectorAll(
       '[class~="nav"]:not(nav), [class~="navbar"]:not(nav), [class~="navigation"]:not(nav), ' +
       '[id="nav"]:not(nav), [id="navbar"]:not(nav), [id="navigation"]:not(nav)'
@@ -49,7 +35,7 @@ export class ARIAManager {
       }
     });
 
-    // Main content (exclude HTML5 <main> - already has implicit role)
+    
     const mainElements = root.querySelectorAll(
       '[class~="main"]:not(main), [class~="main-content"]:not(main), ' +
       '[id="main"]:not(main), [id="main-content"]:not(main), [id="content"]:not(main)'
@@ -61,7 +47,7 @@ export class ARIAManager {
       }
     });
 
-    // Dialogs/Modals
+    
     const dialogSelectors = [
       '[class*="modal"]',
       '[class*="dialog"]',
@@ -81,7 +67,7 @@ export class ARIAManager {
       }
     });
 
-    // Search forms
+    
     const searchForms = root.querySelectorAll('form[class*="search"], form[id*="search"]');
     searchForms.forEach(el => {
       if (el instanceof HTMLElement && !el.hasAttribute('role')) {
@@ -90,7 +76,7 @@ export class ARIAManager {
       }
     });
 
-    // Buttons that look like buttons
+    
     const buttonLikeElements = root.querySelectorAll(
       '[class*="btn"], [class*="button"], [id*="btn"], [id*="button"]'
     );

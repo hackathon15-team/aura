@@ -1,7 +1,3 @@
-/**
- * AccessibilityObserver - Real-time monitoring of DOM changes
- * Detects and processes dynamic content (SPA, AJAX, infinite scroll, etc.)
- */
 
 export class AccessibilityObserver {
   private observer: MutationObserver | null = null;
@@ -23,10 +19,7 @@ export class AccessibilityObserver {
   }
 
   start(): void {
-    if (this.isObserving) {
-      console.warn('[AccessibilityObserver] Already observing');
-      return;
-    }
+    if (this.isObserving) return;
 
     this.observer = new MutationObserver((mutations) => {
       this.handleMutations(mutations);
@@ -50,7 +43,6 @@ export class AccessibilityObserver {
     });
 
     this.isObserving = true;
-    console.log('[AccessibilityObserver] Started monitoring DOM changes');
   }
 
   stop(): void {
@@ -66,7 +58,6 @@ export class AccessibilityObserver {
 
     this.isObserving = false;
     this.mutationQueue = [];
-    console.log('[AccessibilityObserver] Stopped monitoring');
   }
 
   private handleMutations(mutations: MutationRecord[]): void {
@@ -242,7 +233,6 @@ export class AccessibilityObserver {
     if (this.observer && this.isObserving) {
       this.observer.disconnect();
       this.isObserving = false;
-      console.log('[AccessibilityObserver] Paused');
     }
   }
 
@@ -268,7 +258,6 @@ export class AccessibilityObserver {
         characterData: false,
       });
       this.isObserving = true;
-      console.log('[AccessibilityObserver] Resumed');
     }
   }
 }

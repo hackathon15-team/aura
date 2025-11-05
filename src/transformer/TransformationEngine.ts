@@ -1,7 +1,3 @@
-/**
- * TransformationEngine - Improves accessibility WITHOUT changing visual appearance
- * Strategy: Add ARIA attributes and keyboard handlers only, no DOM structure changes
- */
 
 import { AccessibilityIssue, IssueType } from '../scanner/DOMScanner';
 

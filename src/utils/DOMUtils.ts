@@ -1,7 +1,3 @@
-/**
- * DOMUtils - Utility functions for accessibility enhancements
- * Does NOT modify DOM structure, only reads and analyzes
- */
 
 export class DOMUtils {
   /**
