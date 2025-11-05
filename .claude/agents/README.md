@@ -1,6 +1,6 @@
-# Web-Ally Sub-Agents
+# AURA Sub-Agents
 
-This directory contains specialized sub-agent definitions for developing the Web-Ally browser extension.
+This directory contains specialized sub-agent definitions for developing the AURA browser extension.
 
 ## Agent Architecture
 
