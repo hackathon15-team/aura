@@ -103,17 +103,19 @@
 
 ## 📦 설치
 
-### 1. Vision API 서버 (선택)
+### 1. API 키 설정 (선택)
 
-이미지 alt 텍스트 자동 생성을 사용하려면:
+이미지 alt 텍스트 자동 생성을 사용하려면 OpenAI API 키가 필요합니다:
 
 ```bash
-cd server
-npm install
+# .env.example을 .env로 복사
 cp .env.example .env
-# .env에 OPENAI_API_KEY 설정
-npm start
+
+# .env 파일에 OpenAI API 키 설정
+VITE_OPENAI_API_KEY=your_openai_api_key_here
 ```
+
+**참고:** API 키 없이도 확장 프로그램은 동작하지만, 이미지 alt 텍스트는 파일명 기반 폴백만 사용됩니다.
 
 ### 2. 확장 프로그램 빌드
 

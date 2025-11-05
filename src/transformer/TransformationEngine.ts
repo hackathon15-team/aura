@@ -19,9 +19,10 @@ export class TransformationEngine {
   // Track keyboard event handlers to prevent memory leaks
   private keyboardHandlers = new WeakMap<HTMLElement, (event: KeyboardEvent) => void>();
 
-  // Vision API configuration
-  private readonly VISION_API_URL = 'http://localhost:3000/analyze-image';
-  private readonly VISION_API_TIMEOUT = 5000;
+  // OpenAI Vision API configuration
+  private readonly OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
+  private readonly OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+  private readonly VISION_API_TIMEOUT = 10000;
   private readonly VISION_API_RETRIES = 2;
 
   async transform(issue: AccessibilityIssue): Promise<TransformationLog | null> {
@@ -252,9 +253,15 @@ export class TransformationEngine {
   }
 
   /**
-   * Analyze image with Vision API (with retry and timeout)
+   * Analyze image with OpenAI Vision API (direct call, with retry and timeout)
    */
   private async analyzeImageWithVision(imageUrl: string): Promise<string> {
+    // Check if API key is configured
+    if (!this.OPENAI_API_KEY) {
+      console.warn('[TransformationEngine] OpenAI API key not configured. Skipping vision analysis.');
+      return '';
+    }
+
     let lastError: Error | null = null;
 
     // Retry loop
@@ -263,33 +270,64 @@ export class TransformationEngine {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.VISION_API_TIMEOUT);
 
-        const response = await fetch(this.VISION_API_URL, {
+        const response = await fetch(this.OPENAI_API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl }),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'text',
+                    text: `이 이미지에 대한 alt 텍스트를 작성해주세요. 다음 지침을 따라주세요:
+
+1. 이미지의 **목적과 의미**를 설명하세요 (단순히 외형 묘사는 피하세요)
+2. 이미지에 **텍스트**가 포함되어 있다면 반드시 그 내용을 포함하세요
+3. **간결하게** 작성하세요 (1-2문장, 최대 125자)
+4. "이미지", "사진", "그림" 같은 불필요한 단어는 생략하세요
+5. 장식용 이미지라면 "장식용 이미지"라고만 답하세요
+6. 버튼이나 링크 이미지라면 그 **기능**을 설명하세요 (예: "검색", "닫기")
+
+핵심 정보만 한국어로 간결하게 작성해주세요.`,
+                  },
+                  {
+                    type: 'image_url',
+                    image_url: { url: imageUrl },
+                  },
+                ],
+              },
+            ],
+            max_tokens: 100,
+          }),
           signal: controller.signal,
         });
 
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          throw new Error(`Vision API returned ${response.status}`);
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(`OpenAI API returned ${response.status}: ${JSON.stringify(errorData)}`);
         }
 
         const data = await response.json();
-        const altText = data.altText?.trim() || '';
+        const altText = data.choices?.[0]?.message?.content?.trim() || '';
 
         if (altText) {
           return altText;
         }
 
-        throw new Error('Empty alt text from Vision API');
+        throw new Error('Empty alt text from OpenAI API');
       } catch (error) {
         lastError = error as Error;
 
         // If aborted (timeout), don't retry
         if (lastError.name === 'AbortError') {
-          console.warn('[TransformationEngine] Vision API timeout');
+          console.warn('[TransformationEngine] OpenAI Vision API timeout');
           break;
         }
 
@@ -300,7 +338,7 @@ export class TransformationEngine {
       }
     }
 
-    console.warn('[TransformationEngine] Vision API failed after retries:', lastError?.message);
+    console.warn('[TransformationEngine] OpenAI Vision API failed after retries:', lastError?.message);
     return '';
   }
 
