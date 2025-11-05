@@ -29,6 +29,8 @@ app.post('/analyze-image', async (req, res) => {
       return res.status(400).json({ error: 'Image URL is required' });
     }
 
+    console.log('[Vision API] Analyzing image:', imageUrl.substring(0, 100));
+
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -61,6 +63,7 @@ app.post('/analyze-image', async (req, res) => {
     const altText = response.choices[0].message.content.trim();
     res.json({ altText });
   } catch (error) {
+    console.error('Error analyzing image:', error);
     res.status(500).json({ error: 'Failed to analyze image' });
   }
 });
