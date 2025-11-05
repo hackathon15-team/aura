@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Web-Ally** is a browser extension that automatically detects and fixes web accessibility issues in real-time to improve screen reader compatibility. This is a hackathon project (3-day development timeline).
+**AURA** is a browser extension that automatically detects and fixes web accessibility issues in real-time to improve screen reader compatibility. This is a hackathon project (3-day development timeline).
 
 **Core Philosophy:** "Don't just fix listed examples - fix everything that can improve web accessibility"
 
