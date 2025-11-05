@@ -3,7 +3,7 @@
 - axe-core로 WCAG 2.1 위반 자동 감지
 - onclick 있는 div/span에 role="button" + tabindex="0" + Enter/Space 키보드 이벤트 추가
 - CSS bold/italic 요소에 aria-label 추가
-- 이미지 alt 누락 시 파일명으로 자동 생성
+- 이미지 alt 누락 시 OpenAI Vision API로 자동 분석 및 생성
 - 폼 요소에 aria-label 추가 (placeholder/인접 텍스트 활용)
 - nav 요소에 role="navigation" 추가
 - main 요소에 role="main" 추가
