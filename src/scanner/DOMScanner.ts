@@ -34,14 +34,16 @@ export enum Priority {
 
 export class DOMScanner {
   private processedElements = new WeakSet<HTMLElement>();
+  private axeRunning = false;
 
   async scan(root: HTMLElement): Promise<AccessibilityIssue[]> {
     const issues: AccessibilityIssue[] = [];
     this.processedElements = new WeakSet();
 
-    // Run axe-core analysis
-    const axeIssues = await this.runAxeCore(root);
-    issues.push(...axeIssues);
+    if (!this.axeRunning && root.isConnected) {
+      const axeIssues = await this.runAxeCore(root);
+      issues.push(...axeIssues);
+    }
 
     // Optimized: Single-pass DOM traversal for all checks
     issues.push(...this.scanAllElements(root));
@@ -244,6 +246,7 @@ export class DOMScanner {
     const issues: AccessibilityIssue[] = [];
 
     try {
+      this.axeRunning = true;
       const results = await axe.run(root, {
         resultTypes: ['violations'],
       });
@@ -264,6 +267,8 @@ export class DOMScanner {
       }
     } catch (error) {
       console.error('[DOMScanner] axe-core analysis failed:', error);
+    } finally {
+      this.axeRunning = false;
     }
 
     return issues;
