@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web-Ally</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 400px;
+      height: 600px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      font-size: 18px;
+      color: #1a73e8;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+      background-color: #1a73e8;
+    }
+
+    input:checked + .toggle-slider:before {
+      transform: translateX(24px);
+    }
+
+    .toggle-slider:hover {
+      background-color: #999;
+    }
+
+    input:checked + .toggle-slider:hover {
+      background-color: #1557b0;
+    }
+
+    .status {
+      padding: 12px;
+      border-radius: 8px;
+      background: #e8f5e9;
+      color: #2e7d32;
+      margin-bottom: 16px;
+      transition: all 0.3s;
+    }
+
+    .status.disabled {
+      background: #f5f5f5;
+      color: #999;
+    }
+
+    .status strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .status p {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .stat-item {
+      flex: 1;
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      display: block;
+      color: #1a73e8;
+      font-weight: bold;
+      font-size: 24px;
+    }
+
+    .logs-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .logs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .logs-header h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .clear-btn {
+      background: none;
+      border: 1px solid #ccc;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .clear-btn:hover {
+      background: #f5f5f5;
+      border-color: #999;
+    }
+
+    .logs-container {
+      flex: 1;
+      overflow-y: auto;
+      background: #fafafa;
+      border-radius: 4px;
+      padding: 8px;
+      min-height: 0;
+    }
+
+    .log-entry {
+      background: white;
+      border-left: 3px solid #1a73e8;
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .log-type {
+      font-weight: 600;
+      color: #1a73e8;
+    }
+
+    .log-time {
+      font-size: 10px;
+      color: #999;
+    }
+
+    .log-description {
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .log-element {
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 11px;
+      color: #666;
+      background: #f5f5f5;
+      padding: 4px;
+      border-radius: 3px;
+      margin-bottom: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .log-change {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 4px;
+      font-size: 11px;
+    }
+
+    .log-change-label {
+      color: #999;
+      font-weight: 500;
+    }
+
+    .log-change-value {
+      color: #333;
+    }
+
+    .log-change-value.before {
+      color: #e74c3c;
+    }
+
+    .log-change-value.after {
+      color: #27ae60;
+      font-weight: 500;
+    }
+
+    .no-logs {
+      text-align: center;
+      color: #999;
+      padding: 32px 16px;
+      font-size: 13px;
+    }
+
+    .footer {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+    }
+
+    /* Scrollbar styling */
+    .logs-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .logs-container::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+
+    .logs-container::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 3px;
+    }
+
+    .logs-container::-webkit-scrollbar-thumb:hover {
+      background: #999;
+    }
+  </style>
+</head>
+<body>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <h1 style="margin: 0;">🌐 Web-Ally</h1>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggle-enabled" checked>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+
+  <div class="status" role="status" aria-live="polite">
+    <strong id="status-text">활성화됨</strong>
+    <p id="status-description">현재 페이지의 접근성을 개선하고 있습니다.</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat-item">
+      <span class="stat-label">감지</span>
+      <span class="stat-value" id="issues-found">-</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">수정</span>
+      <span class="stat-value" id="fixed-count">-</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">ARIA</span>
+      <span class="stat-value" id="aria-count">-</span>
+    </div>
+  </div>
+
+  <div class="logs-section">
+    <div class="logs-header">
+      <h2>수정 내역</h2>
+      <button class="clear-btn" id="clear-logs">초기화</button>
+    </div>
+    <div class="logs-container" id="logs-container">
+      <div class="no-logs">아직 수정 내역이 없습니다.</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p style="margin: 0;">
+      스크린 리더 사용자를 위한 실시간 웹 접근성 개선 도구
+    </p>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

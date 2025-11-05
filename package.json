@@ -1,0 +1,24 @@
+{
+  "name": "web-ally",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chrome": "^0.1.27",
+    "@types/node": "^24.10.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12",
+    "vite-plugin-web-extension": "^4.5.0"
+  },
+  "dependencies": {
+    "axe-core": "^4.11.0"
+  }
+}

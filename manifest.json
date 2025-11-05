@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Web-Ally",
+  "version": "1.0.0",
+  "description": "Automatically detects and fixes web accessibility issues in real-time to improve screen reader compatibility",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
