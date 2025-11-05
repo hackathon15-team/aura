@@ -8,7 +8,13 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+// Open CORS for all origins
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 const openai = new OpenAI({
@@ -55,7 +61,6 @@ app.post('/analyze-image', async (req, res) => {
     const altText = response.choices[0].message.content.trim();
     res.json({ altText });
   } catch (error) {
-    console.error('Error analyzing image:', error);
     res.status(500).json({ error: 'Failed to analyze image' });
   }
 });
