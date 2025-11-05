@@ -1,4 +1,4 @@
-# Web-Ally Development Tasks
+# AURA Development Tasks
 
 **Status:** 완료 - 프로덕션 준비 완료
 
