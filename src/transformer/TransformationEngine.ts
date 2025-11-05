@@ -170,7 +170,7 @@ export class TransformationEngine {
   }
 
   /**
-   * Add alt text to images - this doesn't change visual appearance
+   * Add alt text to images using Vision API
    */
   private async addAltText(img: HTMLImageElement): Promise<TransformationLog | null> {
     // Don't modify if already has alt (even if empty - empty means decorative)
@@ -178,10 +178,9 @@ export class TransformationEngine {
       return null;
     }
 
-    // Try to infer alt text from context
     let altText = '';
 
-    // Check for aria-label
+    // Check for aria-label first
     if (img.getAttribute('aria-label')) {
       altText = img.getAttribute('aria-label')!;
     }
@@ -189,19 +188,58 @@ export class TransformationEngine {
     else if (img.title) {
       altText = img.title;
     }
-    // Check for filename (last resort)
-    else if (img.src) {
+    // Try Vision API for actual image analysis
+    else if (img.src && img.complete && img.naturalWidth > 0) {
+      try {
+        // Skip data URLs and very small images (likely icons/decorative)
+        if (!img.src.startsWith('data:') && img.naturalWidth > 50 && img.naturalHeight > 50) {
+          altText = await this.analyzeImageWithVision(img.src);
+        }
+      } catch (error) {
+        console.log('[TransformationEngine] Vision API failed, using fallback');
+      }
+    }
+
+    // Fallback to filename if Vision API failed
+    if (!altText && img.src) {
       const filename = img.src.split('/').pop()?.split('.')[0] || '';
       if (filename && !filename.match(/^\d+$/) && filename.length < 50) {
         altText = filename.replace(/[-_]/g, ' ');
       }
     }
 
-    // Set alt text (can be empty for decorative images)
     img.alt = altText;
-
     console.log('[TransformationEngine] Added alt text:', altText || '(decorative)');
-    return null; // Simplified for now
+
+    return {
+      type: 'Image Alt',
+      description: 'alt 텍스트 추가',
+      element: this.getElementDescription(img),
+      before: '(없음)',
+      after: altText || '(장식용)',
+    };
+  }
+
+  private async analyzeImageWithVision(imageUrl: string): Promise<string> {
+    const serverUrl = 'http://localhost:3000/analyze-image';
+
+    try {
+      const response = await fetch(serverUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Vision API request failed');
+      }
+
+      const data = await response.json();
+      return data.altText || '';
+    } catch (error) {
+      console.error('[TransformationEngine] Vision API error:', error);
+      return '';
+    }
   }
 
   /**
