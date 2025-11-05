@@ -11,7 +11,6 @@ export class ARIAManager {
     count += this.applyLabels(root);
     count += this.applyStates(root);
     count += this.applyProperties(root);
-    count += this.applyLandmarks(root);
 
     return count;
   }
