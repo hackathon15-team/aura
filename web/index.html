@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AURA 시연 - 접근성 문제가 있는 웹사이트</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 접근성 문제: role="banner" 없음 -->
+  <div class="header">
+    <div class="logo">🌐 데모 쇼핑몰</div>
+    <!-- 접근성 문제: role="navigation" 없음 -->
+    <div class="nav">
+      <div class="nav-item">홈</div>
+      <div class="nav-item">상품</div>
+      <div class="nav-item">장바구니</div>
+      <div class="nav-item">로그인</div>
+    </div>
+  </div>
+
+  <!-- 접근성 문제: role="main" 없음 -->
+  <div class="container">
+    <div class="hero">
+      <h1>특별 할인 이벤트</h1>
+      <p>지금 구매하시면 <span class="bold">최대 50% 할인</span>!</p>
+      <!-- 접근성 문제: div onclick (버튼이어야 함) + tabindex 없음 -->
+      <div class="btn-primary" onclick="alert('할인 받기 클릭!')">할인 받기</div>
+    </div>
+
+    <div class="section">
+      <h2>인기 상품</h2>
+      <div class="product-grid">
+        <!-- 접근성 문제: alt 텍스트 없는 이미지 -->
+        <div class="product-card" onclick="alert('상품 1 클릭')">
+          <img src="https://via.placeholder.com/300x300/FF6B6B/FFFFFF?text=Product+1" />
+          <h3>스마트워치</h3>
+          <p class="price">199,000원</p>
+          <div class="btn-buy">구매하기</div>
+        </div>
+
+        <div class="product-card" onclick="alert('상품 2 클릭')">
+          <img src="https://via.placeholder.com/300x300/4ECDC4/FFFFFF?text=Product+2" />
+          <h3>무선 이어폰</h3>
+          <p class="price">89,000원</p>
+          <div class="btn-buy">구매하기</div>
+        </div>
+
+        <div class="product-card" onclick="alert('상품 3 클릭')">
+          <img src="https://via.placeholder.com/300x300/95E1D3/FFFFFF?text=Product+3" />
+          <h3>블루투스 스피커</h3>
+          <p class="price">149,000원</p>
+          <div class="btn-buy">구매하기</div>
+        </div>
+
+        <div class="product-card" onclick="alert('상품 4 클릭')">
+          <img src="https://via.placeholder.com/300x300/F38181/FFFFFF?text=Product+4" />
+          <h3>스마트 전구</h3>
+          <p class="price">29,000원</p>
+          <div class="btn-buy">구매하기</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>뉴스레터 구독</h2>
+      <!-- 접근성 문제: label 없는 input -->
+      <div class="newsletter">
+        <input type="email" placeholder="이메일을 입력하세요" class="newsletter-input">
+        <div class="btn-subscribe" onclick="alert('구독하기 클릭!')">구독하기</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>고객 후기</h2>
+      <!-- 접근성 문제: aria-expanded 없는 드롭다운 -->
+      <div class="dropdown">
+        <div class="dropdown-toggle" onclick="toggleDropdown()">
+          후기 더보기 ▼
+        </div>
+        <div class="dropdown-menu" id="reviewDropdown" style="display: none;">
+          <div class="dropdown-item">⭐⭐⭐⭐⭐ 정말 좋아요! - 김철수</div>
+          <div class="dropdown-item">⭐⭐⭐⭐ 가성비 최고 - 이영희</div>
+          <div class="dropdown-item">⭐⭐⭐⭐⭐ 추천합니다 - 박민수</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 접근성 문제: role="dialog" 없음, aria-modal 없음 -->
+    <div class="modal-trigger" onclick="openModal()">
+      할인 쿠폰 받기 🎁
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay" style="display: none;" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h3>특별 할인 쿠폰</h3>
+          <!-- 접근성 문제: div로 된 닫기 버튼 -->
+          <div class="modal-close" onclick="closeModal()">✕</div>
+        </div>
+        <div class="modal-body">
+          <p>첫 구매 고객님께 <span class="bold">10,000원 할인</span> 쿠폰을 드립니다!</p>
+          <p>쿠폰 코드: <span class="italic">WELCOME2024</span></p>
+          <!-- 접근성 문제: label 없는 체크박스 -->
+          <div class="checkbox-group">
+            <input type="checkbox" id="agree">
+            <span>마케팅 정보 수신에 동의합니다</span>
+          </div>
+          <div class="btn-primary" onclick="alert('쿠폰 받기!'); closeModal();">쿠폰 받기</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 접근성 문제: role="contentinfo" 없음 -->
+  <div class="footer">
+    <p>© 2024 데모 쇼핑몰. All rights reserved.</p>
+    <p>이 페이지는 접근성 문제를 시연하기 위한 데모입니다.</p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
