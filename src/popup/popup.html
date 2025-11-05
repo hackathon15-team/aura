@@ -7,28 +7,36 @@
   <style>
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      width: 400px;
-      height: 600px;
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #ffffff;
+      color: #1f2937;
+    }
+
+    .header {
       padding: 16px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      margin: 0;
+      border-bottom: 1px solid #e5e7eb;
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
     }
 
-    h1 {
-      font-size: 18px;
-      color: #1a73e8;
+    .title {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    /* Toggle Switch */
     .toggle-switch {
       position: relative;
-      display: inline-block;
-      width: 48px;
+      width: 44px;
       height: 24px;
     }
 
@@ -41,12 +49,9 @@
     .toggle-slider {
       position: absolute;
       cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #ccc;
-      transition: 0.3s;
+      inset: 0;
+      background: #d1d5db;
+      transition: 0.2s;
       border-radius: 24px;
     }
 
@@ -57,274 +62,239 @@
       width: 18px;
       left: 3px;
       bottom: 3px;
-      background-color: white;
-      transition: 0.3s;
+      background: white;
+      transition: 0.2s;
       border-radius: 50%;
     }
 
     input:checked + .toggle-slider {
-      background-color: #1a73e8;
+      background: #6366f1;
     }
 
     input:checked + .toggle-slider:before {
-      transform: translateX(24px);
+      transform: translateX(20px);
     }
 
-    .toggle-slider:hover {
-      background-color: #999;
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-bottom: 1px solid #e5e7eb;
     }
 
-    input:checked + .toggle-slider:hover {
-      background-color: #1557b0;
-    }
-
-    .status {
-      padding: 12px;
-      border-radius: 8px;
-      background: #e8f5e9;
-      color: #2e7d32;
-      margin-bottom: 16px;
-      transition: all 0.3s;
-    }
-
-    .status.disabled {
-      background: #f5f5f5;
-      color: #999;
-    }
-
-    .status strong {
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .status p {
-      margin: 0;
-      font-size: 14px;
-    }
-
-    .stats {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .stat-item {
-      flex: 1;
-      padding: 12px;
-      background: #f5f5f5;
-      border-radius: 8px;
+    .stat-card {
+      padding: 20px 12px;
       text-align: center;
+      border-right: 1px solid #e5e7eb;
     }
 
-    .stat-label {
-      display: block;
-      font-size: 11px;
-      color: #666;
-      margin-bottom: 4px;
+    .stat-card:last-child {
+      border-right: none;
     }
 
     .stat-value {
       display: block;
-      color: #1a73e8;
-      font-weight: bold;
       font-size: 24px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #6b7280;
+      font-weight: 500;
     }
 
     .logs-section {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
+      background: #ffffff;
     }
 
     .logs-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #e0e0e0;
+      padding: 12px 16px;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid #e5e7eb;
     }
 
-    .logs-header h2 {
-      margin: 0;
-      font-size: 14px;
+    .logs-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
       font-weight: 600;
-      color: #333;
+      color: #374151;
+    }
+
+    .logs-toggle-icon {
+      font-size: 10px;
+      color: #6b7280;
+      transition: transform 0.2s;
+    }
+
+    .logs-section.expanded .logs-toggle-icon {
+      transform: rotate(90deg);
     }
 
     .clear-btn {
       background: none;
-      border: 1px solid #ccc;
+      border: none;
       padding: 4px 8px;
-      border-radius: 4px;
       font-size: 11px;
       cursor: pointer;
-      color: #666;
+      color: #6b7280;
+      font-weight: 500;
     }
 
     .clear-btn:hover {
-      background: #f5f5f5;
-      border-color: #999;
+      color: #374151;
     }
 
     .logs-container {
-      flex: 1;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.2s ease;
+    }
+
+    .logs-section.expanded .logs-container {
+      max-height: 300px;
       overflow-y: auto;
-      background: #fafafa;
-      border-radius: 4px;
-      padding: 8px;
-      min-height: 0;
     }
 
     .log-entry {
-      background: white;
-      border-left: 3px solid #1a73e8;
-      padding: 8px;
-      margin-bottom: 8px;
-      border-radius: 4px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f3f4f6;
       font-size: 12px;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
     }
 
     .log-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
     .log-type {
       font-weight: 600;
-      color: #1a73e8;
+      color: #6366f1;
     }
 
     .log-time {
       font-size: 10px;
-      color: #999;
+      color: #9ca3af;
     }
 
     .log-description {
-      color: #666;
-      margin-bottom: 4px;
+      color: #374151;
+      margin-bottom: 6px;
+      line-height: 1.4;
     }
 
     .log-element {
-      font-family: 'Monaco', 'Consolas', monospace;
-      font-size: 11px;
-      color: #666;
-      background: #f5f5f5;
-      padding: 4px;
-      border-radius: 3px;
-      margin-bottom: 4px;
+      font-family: monospace;
+      font-size: 10px;
+      color: #9ca3af;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      margin-bottom: 6px;
     }
 
     .log-change {
       display: grid;
-      grid-template-columns: 40px 1fr;
-      gap: 4px;
+      grid-template-columns: 50px 1fr;
+      gap: 6px;
       font-size: 11px;
     }
 
     .log-change-label {
-      color: #999;
-      font-weight: 500;
+      color: #9ca3af;
+      font-weight: 600;
     }
 
     .log-change-value {
-      color: #333;
+      color: #374151;
+      word-break: break-word;
     }
 
     .log-change-value.before {
-      color: #e74c3c;
+      color: #dc2626;
     }
 
     .log-change-value.after {
-      color: #27ae60;
+      color: #16a34a;
       font-weight: 500;
     }
 
     .no-logs {
       text-align: center;
-      color: #999;
+      color: #9ca3af;
       padding: 32px 16px;
-      font-size: 13px;
+      font-size: 12px;
     }
 
-    .footer {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #e0e0e0;
-      font-size: 11px;
-      color: #666;
-      text-align: center;
-    }
-
-    /* Scrollbar styling */
     .logs-container::-webkit-scrollbar {
-      width: 6px;
+      width: 5px;
     }
 
     .logs-container::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 3px;
+      background: transparent;
     }
 
     .logs-container::-webkit-scrollbar-thumb {
-      background: #ccc;
+      background: #d1d5db;
       border-radius: 3px;
     }
 
-    .logs-container::-webkit-scrollbar-thumb:hover {
-      background: #999;
+    body.disabled-mode .stats-grid,
+    body.disabled-mode .logs-section {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-    <h1 style="margin: 0;">🌐 Web-Ally</h1>
+  <div class="header">
+    <div class="title">
+      <span>🌐</span>
+      <span>Web-Ally</span>
+    </div>
     <label class="toggle-switch">
       <input type="checkbox" id="toggle-enabled" checked>
       <span class="toggle-slider"></span>
     </label>
   </div>
 
-  <div class="status" role="status" aria-live="polite">
-    <strong id="status-text">활성화됨</strong>
-    <p id="status-description">현재 페이지의 접근성을 개선하고 있습니다.</p>
-  </div>
-
-  <div class="stats">
-    <div class="stat-item">
-      <span class="stat-label">감지</span>
+  <div class="stats-grid">
+    <div class="stat-card">
       <span class="stat-value" id="issues-found">-</span>
+      <span class="stat-label">감지</span>
     </div>
-    <div class="stat-item">
-      <span class="stat-label">수정</span>
+    <div class="stat-card">
       <span class="stat-value" id="fixed-count">-</span>
+      <span class="stat-label">수정</span>
     </div>
-    <div class="stat-item">
-      <span class="stat-label">ARIA</span>
+    <div class="stat-card">
       <span class="stat-value" id="aria-count">-</span>
+      <span class="stat-label">ARIA</span>
     </div>
   </div>
 
   <div class="logs-section">
-    <div class="logs-header">
-      <h2>수정 내역</h2>
+    <div class="logs-header" id="logs-header">
+      <div class="logs-header-left">
+        <span class="logs-toggle-icon">▶</span>
+        <span>수정 내역</span>
+      </div>
       <button class="clear-btn" id="clear-logs">초기화</button>
     </div>
     <div class="logs-container" id="logs-container">
-      <div class="no-logs">아직 수정 내역이 없습니다.</div>
+      <div class="no-logs">아직 수정 내역이 없습니다</div>
     </div>
-  </div>
-
-  <div class="footer">
-    <p style="margin: 0;">
-      스크린 리더 사용자를 위한 실시간 웹 접근성 개선 도구
-    </p>
   </div>
 
   <script src="popup.js"></script>
