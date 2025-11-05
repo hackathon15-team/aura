@@ -37,10 +37,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (response) {
           updateToggleState(response.enabled);
           if (response.enabled) {
+            showContent();
             displayStats(response);
             displayLogs(response.logs);
           } else {
-            showDisabled();
+            hideContent();
           }
         } else {
           showError('통계를 가져올 수 없습니다.');
@@ -63,9 +64,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
+    const logsHeader = document.getElementById('logs-header');
+    if (logsHeader) {
+      logsHeader.addEventListener('click', (e) => {
+        const logsSection = document.querySelector('.logs-section');
+        if (logsSection) {
+          logsSection.classList.toggle('expanded');
+        }
+      });
+    }
+
     const clearBtn = document.getElementById('clear-logs');
     if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
+      clearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         chrome.tabs.sendMessage(tab.id!, { type: 'CLEAR_LOGS' }, () => {
           const logsContainer = document.getElementById('logs-container');
           if (logsContainer) {
@@ -130,33 +142,15 @@ function displayLogs(logs: ModificationLog[]): void {
   });
 }
 
-function showDisabled(): void {
-  const issuesFoundEl = document.getElementById('issues-found');
-  const fixedCountEl = document.getElementById('fixed-count');
-  const ariaCountEl = document.getElementById('aria-count');
+function showContent(): void {
+  document.body.classList.remove('disabled-mode');
+}
 
-  if (issuesFoundEl) issuesFoundEl.textContent = '-';
-  if (fixedCountEl) fixedCountEl.textContent = '-';
-  if (ariaCountEl) ariaCountEl.textContent = '-';
-
-  const logsContainer = document.getElementById('logs-container');
-  if (logsContainer) {
-    logsContainer.innerHTML = '<div class="no-logs">확장 프로그램이 비활성화되어 있습니다.</div>';
-  }
+function hideContent(): void {
+  document.body.classList.add('disabled-mode');
 }
 
 function showError(message: string): void {
-  const statusEl = document.querySelector('.status strong');
-  if (statusEl) {
-    statusEl.textContent = '오류';
-    (statusEl as HTMLElement).style.color = '#e74c3c';
-  }
-
-  const statusTextEl = document.querySelector('.status p');
-  if (statusTextEl) {
-    statusTextEl.textContent = message;
-  }
-
   const issuesFoundEl = document.getElementById('issues-found');
   const fixedCountEl = document.getElementById('fixed-count');
   const ariaCountEl = document.getElementById('aria-count');
@@ -164,28 +158,18 @@ function showError(message: string): void {
   if (issuesFoundEl) issuesFoundEl.textContent = '0';
   if (fixedCountEl) fixedCountEl.textContent = '0';
   if (ariaCountEl) ariaCountEl.textContent = '0';
+
+  const logsContainer = document.getElementById('logs-container');
+  if (logsContainer) {
+    logsContainer.innerHTML = `<div class="no-logs">${message}</div>`;
+  }
 }
 
 function updateToggleState(enabled: boolean): void {
   const toggleBtn = document.getElementById('toggle-enabled') as HTMLInputElement;
-  const statusBox = document.querySelector('.status');
-  const statusText = document.getElementById('status-text');
-  const statusDescription = document.getElementById('status-description');
 
   if (toggleBtn) {
     toggleBtn.checked = enabled;
-  }
-
-  if (statusBox) {
-    if (enabled) {
-      statusBox.classList.remove('disabled');
-      if (statusText) statusText.textContent = '활성화됨';
-      if (statusDescription) statusDescription.textContent = '현재 페이지의 접근성을 개선하고 있습니다.';
-    } else {
-      statusBox.classList.add('disabled');
-      if (statusText) statusText.textContent = '비활성화됨';
-      if (statusDescription) statusDescription.textContent = '접근성 개선이 중지되었습니다.';
-    }
   }
 }
 
