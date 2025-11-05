@@ -148,13 +148,13 @@ export class TransformationEngine {
     const isItalic = computed.fontStyle === 'italic';
 
     if (!isBold && !isItalic) {
-      return;
+      return null;
     }
 
     // Don't add if already has semantic children
     const hasSemanticEmphasis = element.querySelector('strong, em, b, i');
     if (hasSemanticEmphasis) {
-      return;
+      return null;
     }
 
     // Add aria-label to indicate emphasis to screen readers
