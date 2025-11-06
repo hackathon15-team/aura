@@ -144,7 +144,6 @@ export class ARIAManager {
   private applyStates(root: HTMLElement): number {
     let count = 0;
 
-    // Expandable elements
     const expandableSelectors = [
       '[class*="collapse"]',
       '[class*="expand"]',
@@ -173,7 +172,6 @@ export class ARIAManager {
       }
     });
 
-    // Hidden elements
     const hiddenElements = root.querySelectorAll('[style*="display: none"], [style*="visibility: hidden"]');
     hiddenElements.forEach(el => {
       if (el instanceof HTMLElement && !el.hasAttribute('aria-hidden')) {
@@ -182,7 +180,6 @@ export class ARIAManager {
       }
     });
 
-    // Selected items
     const selectedSelectors = [
       '[class*="selected"]',
       '[class*="active"]',
@@ -202,7 +199,6 @@ export class ARIAManager {
       }
     });
 
-    // Disabled elements
     const disabledElements = root.querySelectorAll('[disabled], [class*="disabled"]');
     disabledElements.forEach(el => {
       if (el instanceof HTMLElement && !el.hasAttribute('aria-disabled')) {
@@ -217,7 +213,6 @@ export class ARIAManager {
   private applyProperties(root: HTMLElement): number {
     let count = 0;
 
-    // Live regions
     const liveRegionSelectors = [
       '[class*="alert"]',
       '[class*="notification"]',
@@ -243,7 +238,6 @@ export class ARIAManager {
       }
     });
 
-    // Required form fields
     const requiredFields = root.querySelectorAll('input[required], select[required], textarea[required]');
     requiredFields.forEach(el => {
       if (el instanceof HTMLElement && !el.hasAttribute('aria-required')) {
@@ -252,7 +246,6 @@ export class ARIAManager {
       }
     });
 
-    // Invalid form fields
     const invalidFields = root.querySelectorAll('.error input, .error select, .error textarea');
     invalidFields.forEach(el => {
       if (el instanceof HTMLElement && !el.hasAttribute('aria-invalid')) {
@@ -261,10 +254,6 @@ export class ARIAManager {
       }
     });
 
-    // Descriptions
-    // Note: aria-description has limited support, so we skip this
-    // Title attribute is already exposed by screen readers
-    // If needed, create a visually hidden element with aria-describedby instead
 
     return count;
   }
@@ -272,7 +261,6 @@ export class ARIAManager {
   private applyLandmarks(root: HTMLElement): number {
     let count = 0;
 
-    // Header (exclude HTML5 <header> - already has implicit role)
     const headers = root.querySelectorAll(
       '[class~="header"]:not(header), [class~="site-header"]:not(header), ' +
       '[id="header"]:not(header), [id="site-header"]:not(header)'
@@ -284,7 +272,6 @@ export class ARIAManager {
       }
     });
 
-    // Footer (exclude HTML5 <footer> - already has implicit role)
     const footers = root.querySelectorAll(
       '[class~="footer"]:not(footer), [class~="site-footer"]:not(footer), ' +
       '[id="footer"]:not(footer), [id="site-footer"]:not(footer)'
@@ -296,7 +283,6 @@ export class ARIAManager {
       }
     });
 
-    // Aside (exclude HTML5 <aside> - already has implicit role)
     const asides = root.querySelectorAll(
       '[class~="sidebar"]:not(aside), [class~="aside"]:not(aside), ' +
       '[id="sidebar"]:not(aside), [id="aside"]:not(aside)'
@@ -308,7 +294,6 @@ export class ARIAManager {
       }
     });
 
-    // Article (exclude HTML5 <article> - already has implicit role)
     const articles = root.querySelectorAll(
       '[class~="article"]:not(article), [class~="post"]:not(article), [class~="entry"]:not(article)'
     );
@@ -322,46 +307,38 @@ export class ARIAManager {
     return count;
   }
 
-  // Helper methods for validation
   private looksLikeNavigation(el: HTMLElement): boolean {
-    // Check for links/navigation patterns
     const links = el.querySelectorAll('a');
     return links.length >= 2; // At least 2 links
   }
 
   private looksLikeMain(el: HTMLElement): boolean {
-    // Main content should be large and contain significant content
     const textLength = el.textContent?.trim().length || 0;
     return textLength > 100; // At least 100 characters
   }
 
   private looksLikeHeader(el: HTMLElement): boolean {
-    // Headers typically at top and contain logo/nav
     const rect = el.getBoundingClientRect();
     return rect.top < 200; // Within top 200px
   }
 
   private looksLikeFooter(el: HTMLElement): boolean {
-    // Footers typically at bottom
     const rect = el.getBoundingClientRect();
     const docHeight = document.documentElement.scrollHeight;
     return rect.bottom > docHeight - 500; // Within bottom 500px
   }
 
   private inferLabel(element: HTMLElement): string | null {
-    // 1. Try text content (most reliable)
     const textContent = DOMUtils.getCleanTextContent(element);
     if (textContent && textContent.length > 0 && textContent.length <= 50) {
       return textContent;
     }
 
-    // 2. Try child image alt text
     const img = element.querySelector('img');
     if (img?.alt && img.alt.trim()) {
       return img.alt.trim();
     }
 
-    // 3. Try aria-label on children
     const childWithLabel = element.querySelector('[aria-label]');
     if (childWithLabel) {
       const label = childWithLabel.getAttribute('aria-label');
@@ -370,13 +347,11 @@ export class ARIAManager {
       }
     }
 
-    // 4. Try title attribute
     const title = element.getAttribute('title');
     if (title && title.trim() && title.length <= 50) {
       return title.trim();
     }
 
-    // 5. Try data-* attributes that might contain labels
     const dataLabel = element.getAttribute('data-label') ||
                       element.getAttribute('data-title') ||
                       element.getAttribute('data-text');
@@ -384,7 +359,6 @@ export class ARIAManager {
       return dataLabel.trim();
     }
 
-    // DON'T use className or ID - they are developer-facing, not user-facing
     return null;
   }
 }

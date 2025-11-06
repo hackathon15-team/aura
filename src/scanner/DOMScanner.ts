@@ -46,17 +46,13 @@ export class DOMScanner {
       issues.push(...axeIssues);
     }
 
-    // Optimized: Single-pass DOM traversal for all checks
     issues.push(...this.scanAllElements(root));
 
-    // Specific scans that need different queries
     issues.push(...this.scanStructuralIssues(root));
     issues.push(...this.scanFormIssues(root));
 
-    // Remove duplicates by element + type
     const uniqueIssues = this.deduplicateIssues(issues);
 
-    // Sort by priority
     uniqueIssues.sort((a, b) => a.priority - b.priority);
 
     return uniqueIssues;
@@ -81,10 +77,6 @@ export class DOMScanner {
     return uniqueIssues;
   }
 
-  /**
-   * Optimized: Single-pass traversal checking all patterns
-   * Replaces multiple querySelectorAll('*') calls
-   */
   private scanAllElements(root: HTMLElement): AccessibilityIssue[] {
     const issues: AccessibilityIssue[] = [];
     const allElements = root.querySelectorAll('*');
@@ -95,7 +87,6 @@ export class DOMScanner {
 
       const tagName = element.tagName.toLowerCase();
 
-      // Check clickable elements (non-semantic buttons)
       const isClickable = this.isElementClickable(element);
       if (isClickable) {
         const isValidClickableElement = ['div', 'span', 'section', 'article', 'li'].includes(tagName);
@@ -109,7 +100,6 @@ export class DOMScanner {
           this.processedElements.add(element);
         }
 
-        // Check keyboard accessibility
         const isNativelyFocusable = ['button', 'a', 'input', 'select', 'textarea'].includes(tagName);
         const hasTabIndex = element.hasAttribute('tabindex');
         if (!isNativelyFocusable && !hasTabIndex) {
@@ -122,11 +112,9 @@ export class DOMScanner {
         }
       }
 
-      // Check CSS-only emphasis (with sampling for performance)
       if (Math.random() < 0.2) {
         const computed = window.getComputedStyle(element);
 
-        // CSS-only bold
         if (this.isBoldText(computed)) {
           const isSemanticBold = ['strong', 'b', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName);
           if (!isSemanticBold && element.textContent && element.textContent.trim().length > 0) {
@@ -139,7 +127,6 @@ export class DOMScanner {
           }
         }
 
-        // CSS-only italic
         if (computed.fontStyle === 'italic') {
           const isSemanticItalic = ['em', 'i'].includes(tagName);
           if (!isSemanticItalic && element.textContent && element.textContent.trim().length > 0) {
@@ -153,7 +140,6 @@ export class DOMScanner {
         }
       }
 
-      // Check interactive elements without labels
       const isInteractive = ['button', 'a'].includes(tagName);
       if (isInteractive) {
         const hasLabel = element.hasAttribute('aria-label') ||
@@ -170,7 +156,6 @@ export class DOMScanner {
         }
       }
 
-      // Check disabled elements for aria-disabled
       if ((element as any).disabled && !element.hasAttribute('aria-disabled')) {
         issues.push({
           element,
@@ -180,7 +165,6 @@ export class DOMScanner {
         });
       }
 
-      // Check links opening in new tab
       if (tagName === 'a' && element.getAttribute('target') === '_blank') {
         const hasWarning = element.textContent?.includes('새 창') ||
                           element.textContent?.includes('새 탭') ||
@@ -199,26 +183,19 @@ export class DOMScanner {
     return issues;
   }
 
-  /**
-   * Detect if element is clickable (supports modern frameworks)
-   */
   private isElementClickable(element: HTMLElement): boolean {
-    // HTML onclick attribute
     if (element.hasAttribute('onclick')) return true;
 
-    // Framework-specific attributes
     if (element.hasAttribute('ng-click')) return true; // Angular
     if (element.hasAttribute('v-on:click')) return true; // Vue
     if (element.hasAttribute('@click')) return true; // Vue shorthand
 
-    // React: Check for data attributes or event handlers
     const hasReactProps = Object.keys(element).some(key => key.startsWith('__react'));
     if (hasReactProps) {
       const computed = window.getComputedStyle(element);
       if (computed.cursor === 'pointer') return true;
     }
 
-    // Heuristic: cursor:pointer on container elements only
     const tagName = element.tagName.toLowerCase();
     const isContainer = ['div', 'span', 'section', 'article', 'li'].includes(tagName);
     if (isContainer) {
@@ -239,11 +216,9 @@ export class DOMScanner {
     const text = element.textContent?.trim();
     if (!text) return false;
 
-    // Reject meaningless text
     const meaningless = ['...', '•', '·', '>', '<', '»', '«'];
     if (meaningless.includes(text)) return false;
 
-    // Must have at least 1 character
     return text.length > 0;
   }
 
@@ -302,10 +277,8 @@ export class DOMScanner {
       }
     });
 
-    // Check heading hierarchy
     const headings = Array.from(root.querySelectorAll('h1, h2, h3, h4, h5, h6')) as HTMLElement[];
 
-    // Check for missing h1
     const hasH1 = headings.some(h => h.tagName === 'H1');
     if (!hasH1 && headings.length > 0) {
       issues.push({
@@ -316,7 +289,6 @@ export class DOMScanner {
       });
     }
 
-    // Check for heading level skips
     let prevLevel = 0;
     for (const heading of headings) {
       const level = parseInt(heading.tagName[1]);
@@ -337,7 +309,6 @@ export class DOMScanner {
   private scanFormIssues(root: HTMLElement): AccessibilityIssue[] {
     const issues: AccessibilityIssue[] = [];
 
-    // Build label map once (performance optimization)
     const labelMap = new Map<string, HTMLLabelElement>();
     const labels = root.querySelectorAll('label[for]');
     labels.forEach((label) => {
@@ -347,7 +318,6 @@ export class DOMScanner {
       }
     });
 
-    // Form inputs without labels
     const inputs = root.querySelectorAll('input:not([type="hidden"]), select, textarea');
     inputs.forEach((input) => {
       if (!(input instanceof HTMLElement)) return;
@@ -357,7 +327,6 @@ export class DOMScanner {
       const hasLabelElement = input.id && labelMap.has(input.id);
       const hasPlaceholder = (input as HTMLInputElement).placeholder;
 
-      // Check if wrapped in label
       const wrappedInLabel = input.closest('label');
 
       if (!hasAriaLabel && !hasLabelElement && !hasPlaceholder && !wrappedInLabel) {
@@ -370,25 +339,20 @@ export class DOMScanner {
       }
     });
 
-    // Check for labels followed by inputs without for-id connection
     const allLabels = root.querySelectorAll('label');
     allLabels.forEach((label) => {
       const nextElement = label.nextElementSibling;
       if (!nextElement) return;
 
-      // Check if next sibling is a form element
       const isFormElement = ['INPUT', 'TEXTAREA', 'SELECT'].includes(nextElement.tagName);
       if (!isFormElement) return;
 
       const input = nextElement as HTMLInputElement;
 
-      // Skip hidden inputs
       if (input.type === 'hidden') return;
 
-      // Skip if label wraps the input (valid pattern)
       if (label.contains(input)) return;
 
-      // Check if already properly connected
       const labelFor = label.getAttribute('for');
       const isConnected = labelFor && input.id && labelFor === input.id;
 
@@ -406,7 +370,6 @@ export class DOMScanner {
   }
 
   private mapAxeViolationToType(violationId: string): IssueType {
-    // Map axe-core violation IDs to our issue types
     const mapping: { [key: string]: IssueType } = {
       'button-name': IssueType.MISSING_ARIA_LABEL,
       'image-alt': IssueType.MISSING_ALT_TEXT,

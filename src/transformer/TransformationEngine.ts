@@ -56,7 +56,6 @@ export class TransformationEngine {
           break;
 
         default:
-          // Other issues handled by ARIAManager
           break;
       }
 
@@ -76,19 +75,13 @@ export class TransformationEngine {
     return `<${tag}${id}${classes}>${text ? ` "${text}..."` : ''}`;
   }
 
-  /**
-   * Make clickable div/span accessible as button WITHOUT changing DOM structure
-   * Only adds ARIA role and keyboard handlers
-   */
   private async makeButtonAccessible(element: HTMLElement): Promise<TransformationLog | null> {
     const tagName = element.tagName.toLowerCase();
 
-    // Skip if already semantic
     if (tagName === 'button' || tagName === 'a') {
       return null;
     }
 
-    // If it's an image, also add alt text
     if (tagName === 'img' && !element.hasAttribute('alt')) {
       await this.addAltText(element as HTMLImageElement);
     }
@@ -140,11 +133,7 @@ export class TransformationEngine {
     };
   }
 
-  /**
-   * Make CSS-styled emphasis accessible
-   */
   private async makeEmphasisAccessible(element: HTMLElement): Promise<TransformationLog | null> {
-    // For CSS-styled elements, don't process if already has semantic children
     const hasSemanticEmphasis = element.querySelector('strong, em, b, i');
     if (hasSemanticEmphasis) {
       return null;
@@ -180,9 +169,6 @@ export class TransformationEngine {
     };
   }
 
-  /**
-   * Add alt text to images using Vision API
-   */
   private async addAltText(img: HTMLImageElement): Promise<TransformationLog | null> {
     if (img.hasAttribute('alt')) {
       return null;
@@ -241,11 +227,7 @@ export class TransformationEngine {
     };
   }
 
-  /**
-   * Analyze image with OpenAI Vision API (direct call, with retry and timeout)
-   */
   private async analyzeImageWithVision(imageUrl: string): Promise<string> {
-    // Check if API key is configured
     if (!this.OPENAI_API_KEY) {
       console.warn('[TransformationEngine] OpenAI API key not configured. Skipping vision analysis.');
       return '';
@@ -253,7 +235,6 @@ export class TransformationEngine {
 
     let lastError: Error | null = null;
 
-    // Retry loop
     for (let attempt = 0; attempt < this.VISION_API_RETRIES; attempt++) {
       try {
         const controller = new AbortController();
@@ -314,13 +295,11 @@ export class TransformationEngine {
       } catch (error) {
         lastError = error as Error;
 
-        // If aborted (timeout), don't retry
         if (lastError.name === 'AbortError') {
           console.warn('[TransformationEngine] OpenAI Vision API timeout');
           break;
         }
 
-        // Wait before retry (exponential backoff)
         if (attempt < this.VISION_API_RETRIES - 1) {
           await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
         }
@@ -331,20 +310,14 @@ export class TransformationEngine {
     return '';
   }
 
-  /**
-   * Add keyboard access WITHOUT changing visual appearance
-   * Only adds event listeners and tabindex
-   */
   private async addKeyboardAccess(element: HTMLElement): Promise<TransformationLog | null> {
     const modifications: string[] = [];
 
-    // Add tabindex if not already focusable
     if (!element.hasAttribute('tabindex') && element.tabIndex < 0) {
       element.tabIndex = 0;
       modifications.push('tabindex="0"');
     }
 
-    // Add keyboard event handler if element has click handler
     const hasClickHandler = element.onclick !== null ||
                            element.hasAttribute('onclick') ||
                            element.getAttribute('role') === 'button';
@@ -374,48 +347,35 @@ export class TransformationEngine {
     };
   }
 
-  /**
-   * Add form labels WITHOUT changing visual appearance
-   * Uses aria-label instead of visible <label> elements
-   */
   private async addFormLabel(element: HTMLElement): Promise<TransformationLog | null> {
-    // Skip if already has label
     if (element.hasAttribute('aria-label') || element.hasAttribute('aria-labelledby')) {
       return null;
     }
 
-    // Check if there's already a visible label
     const existingLabel = element.id ? document.querySelector(`label[for="${element.id}"]`) : null;
     if (existingLabel) {
       return null;
     }
 
-    // Try to infer label text
     let labelText = '';
 
-    // Check for placeholder
     if ((element as HTMLInputElement).placeholder) {
       labelText = (element as HTMLInputElement).placeholder;
     }
-    // Check for title
     else if (element.title) {
       labelText = element.title;
     }
-    // Check for name attribute
     else if (element.hasAttribute('name')) {
       const name = element.getAttribute('name')!;
       labelText = name.replace(/[-_]/g, ' ').replace(/([A-Z])/g, ' $1').trim();
     }
-    // Check previous sibling text
     else if (element.previousElementSibling?.textContent) {
       const prevText = element.previousElementSibling.textContent.trim();
       if (prevText.length > 0 && prevText.length < 50) {
         labelText = prevText;
       }
     }
-    // Check parent text (if parent has little text)
     else if (element.parentElement) {
-      // Get direct text nodes only (not nested elements)
       const parentText = Array.from(element.parentElement.childNodes)
         .filter(node => node.nodeType === Node.TEXT_NODE)
         .map(node => node.textContent?.trim())
@@ -427,7 +387,6 @@ export class TransformationEngine {
       }
     }
 
-    // Add aria-label (no visual change)
     if (labelText) {
       element.setAttribute('aria-label', labelText);
       return {
@@ -438,7 +397,6 @@ export class TransformationEngine {
         after: `aria-label="${labelText.slice(0, 30)}${labelText.length > 30 ? '...' : ''}"`
       };
     } else {
-      // Fallback: use input type as label
       const inputType = (element as HTMLInputElement).type || 'field';
       const fallbackLabel = `${inputType} input`;
       element.setAttribute('aria-label', fallbackLabel);
@@ -452,27 +410,19 @@ export class TransformationEngine {
     }
   }
 
-  /**
-   * Connect label to adjacent input using for-id relationship
-   * Generates unique ID if needed
-   */
   private async connectLabelToInput(label: HTMLLabelElement): Promise<TransformationLog | null> {
     const nextElement = label.nextElementSibling;
     if (!nextElement) return null;
 
-    // Check if next sibling is a form element
     const isFormElement = ['INPUT', 'TEXTAREA', 'SELECT'].includes(nextElement.tagName);
     if (!isFormElement) return null;
 
     const input = nextElement as HTMLInputElement;
 
-    // Skip hidden inputs
     if (input.type === 'hidden') return null;
 
-    // Skip if label wraps the input (valid pattern)
     if (label.contains(input)) return null;
 
-    // Skip if already properly connected
     const labelFor = label.getAttribute('for');
     if (labelFor && input.id && labelFor === input.id) {
       return null;
@@ -482,12 +432,10 @@ export class TransformationEngine {
       ? `for="${label.getAttribute('for')}"`
       : 'for 속성 없음';
 
-    // Generate unique ID if input doesn't have one
     if (!input.id) {
       input.id = `aura-input-${Math.random().toString(36).substring(2, 11)}`;
     }
 
-    // Connect label to input
     label.setAttribute('for', input.id);
 
     return {

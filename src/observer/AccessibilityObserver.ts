@@ -8,10 +8,8 @@ export class AccessibilityObserver {
   private readonly DEBOUNCE_MS = 100;
   private readonly MAX_MUTATIONS_PER_BATCH = 100;
 
-  // Track elements we're currently processing to prevent infinite loops
   private processingElements = new WeakSet<Node>();
 
-  // Track recently processed elements to avoid duplicate processing
   private recentlyProcessed = new WeakSet<Node>();
 
   constructor(callback: (mutations: MutationRecord[]) => void) {
@@ -25,7 +23,6 @@ export class AccessibilityObserver {
       this.handleMutations(mutations);
     });
 
-    // Observe entire document for changes
     this.observer.observe(document.body, {
       childList: true,        // Watch for added/removed nodes
       subtree: true,          // Watch all descendants
@@ -62,44 +59,35 @@ export class AccessibilityObserver {
   }
 
   private handleMutations(mutations: MutationRecord[]): void {
-    // Limit batch size to prevent overload
     if (mutations.length > this.MAX_MUTATIONS_PER_BATCH) {
       console.warn(`[AccessibilityObserver] Large mutation batch: ${mutations.length}, limiting to ${this.MAX_MUTATIONS_PER_BATCH}`);
       mutations = mutations.slice(0, this.MAX_MUTATIONS_PER_BATCH);
     }
 
-    // Filter out irrelevant mutations and prevent infinite loops
     const relevantMutations = mutations.filter(mutation => {
       const target = mutation.target;
 
-      // Prevent infinite loops: ignore elements we're currently processing
       if (this.processingElements.has(target)) {
         return false;
       }
 
-      // Ignore recently processed elements (within debounce window)
       if (this.recentlyProcessed.has(target)) {
         return false;
       }
 
-      // Ignore mutations in our own generated elements
       if (target instanceof HTMLElement) {
         if (target.hasAttribute('data-web-ally-generated')) {
           return false;
         }
 
-        // Ignore mutations caused by our ARIA additions
         if (mutation.type === 'attributes') {
           const attrName = mutation.attributeName;
-          // Skip if we're just adding ARIA attributes
           if (attrName?.startsWith('aria-') ||
               attrName === 'role' ||
               attrName === 'tabindex') {
-            // Only process if it's a removal or significant change
             const oldValue = mutation.oldValue;
             const newValue = target.getAttribute(attrName || '');
 
-            // If we're adding (null → value), skip
             if (!oldValue && newValue) {
               return false;
             }
@@ -107,27 +95,21 @@ export class AccessibilityObserver {
         }
       }
 
-      // For childList mutations, only process if new elements added
       if (mutation.type === 'childList') {
         return mutation.addedNodes.length > 0;
       }
 
-      // For characterData mutations (text changes - Vue rendering)
       if (mutation.type === 'characterData') {
-        // Only process if text actually changed from empty to non-empty
         const oldValue = mutation.oldValue?.trim() || '';
         const newValue = (mutation.target as Text).textContent?.trim() || '';
 
-        // Process if text was added (empty → non-empty) or significantly changed
         if (oldValue.length === 0 && newValue.length > 0) {
           return true;
         }
 
-        // Skip minor text changes
         return false;
       }
 
-      // For attribute mutations on class/style, check if visibility changed
       if (mutation.type === 'attributes') {
         const target = mutation.target as HTMLElement;
         const attrName = mutation.attributeName;
@@ -144,7 +126,6 @@ export class AccessibilityObserver {
       return;
     }
 
-    // Deduplicate by target node
     const uniqueTargets = new Set<Node>();
     const dedupedMutations = relevantMutations.filter(mutation => {
       if (uniqueTargets.has(mutation.target)) {
@@ -154,10 +135,8 @@ export class AccessibilityObserver {
       return true;
     });
 
-    // Add to queue
     this.mutationQueue.push(...dedupedMutations);
 
-    // Debounce processing to avoid excessive updates
     if (this.processingTimeout) {
       clearTimeout(this.processingTimeout);
     }
@@ -176,7 +155,6 @@ export class AccessibilityObserver {
     this.mutationQueue = [];
     this.processingTimeout = null;
 
-    // Mark elements as being processed
     mutations.forEach(mutation => {
       this.processingElements.add(mutation.target);
       mutation.addedNodes.forEach(node => {
@@ -186,14 +164,12 @@ export class AccessibilityObserver {
       });
     });
 
-    // Process in next frame to avoid blocking
     requestAnimationFrame(() => {
       try {
         this.callback(mutations);
       } catch (error) {
         console.error('[AccessibilityObserver] Error processing mutations:', error);
       } finally {
-        // Clear processing flag and mark as recently processed
         mutations.forEach(mutation => {
           this.processingElements.delete(mutation.target);
           this.recentlyProcessed.add(mutation.target);
@@ -206,7 +182,6 @@ export class AccessibilityObserver {
           });
         });
 
-        // Clear recently processed after a delay
         setTimeout(() => {
           this.recentlyProcessed = new WeakSet();
         }, this.DEBOUNCE_MS * 2);
@@ -214,21 +189,15 @@ export class AccessibilityObserver {
     });
   }
 
-  /**
-   * Check if visibility-related attributes changed (without expensive getComputedStyle)
-   */
   private didVisibilityChange(oldValue: string | null, newValue: string | null): boolean {
-    // If no old value, assume it changed
     if (oldValue === null) {
       return true;
     }
 
-    // If values are identical, no change
     if (oldValue === newValue) {
       return false;
     }
 
-    // Check if visibility-related keywords changed
     const visibilityKeywords = ['hide', 'show', 'visible', 'hidden', 'display', 'opacity', 'collapse'];
 
     const oldHasKeyword = visibilityKeywords.some(keyword =>
@@ -238,13 +207,9 @@ export class AccessibilityObserver {
       newValue?.toLowerCase().includes(keyword)
     );
 
-    // If visibility keywords appeared or disappeared, it's a visibility change
     return oldHasKeyword || newHasKeyword;
   }
 
-  /**
-   * Temporarily pause observation (useful during batch updates)
-   */
   pause(): void {
     if (this.observer && this.isObserving) {
       this.observer.disconnect();
@@ -252,12 +217,8 @@ export class AccessibilityObserver {
     }
   }
 
-  /**
-   * Resume observation after pause
-   */
   resume(): void {
     if (this.observer && !this.isObserving) {
-      // Reconnect the existing observer
       this.observer.observe(document.body, {
         childList: true,
         subtree: true,

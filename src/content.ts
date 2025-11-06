@@ -78,7 +78,6 @@ class AURA {
   private convertEmphasisTags(): void {
     let convertedCount = 0;
 
-    // <b> → <strong>
     document.querySelectorAll('b').forEach(b => {
       const strong = document.createElement('strong');
       strong.innerHTML = b.innerHTML;
@@ -89,7 +88,6 @@ class AURA {
       convertedCount++;
     });
 
-    // <i> → <em>
     document.querySelectorAll('i').forEach(i => {
       const em = document.createElement('em');
       em.innerHTML = i.innerHTML;
@@ -134,7 +132,6 @@ class AURA {
   }
 
   private async scanAndTransform(): Promise<void> {
-    // 먼저 <b> → <strong>, <i> → <em> 변환 (동기적으로 빠르게)
     this.convertEmphasisTags();
 
     const issues = await this.scanner.scan(document.body);
@@ -175,14 +172,12 @@ class AURA {
     const elementsToScan: Set<HTMLElement> = new Set();
 
     for (const mutation of mutations) {
-      // Handle added nodes
       mutation.addedNodes.forEach(node => {
         if (node.nodeType === Node.ELEMENT_NODE && node instanceof HTMLElement) {
           elementsToScan.add(node);
         }
       });
 
-      // Handle text changes (Vue rendering) - scan parent element
       if (mutation.type === 'characterData') {
         const parent = mutation.target.parentElement;
         if (parent) {
