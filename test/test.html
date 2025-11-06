@@ -6,6 +6,8 @@
       body {
         background-color: #f9f9f9;
         font-family: Arial;
+        margin: 100px;
+        /* 세로로 flex 정렬*/
       }
       .toc {
         background-color: #eee;
@@ -13,11 +15,14 @@
         border: 1px solid #ccc;
         width: 200px;
       }
-      .toc a {
+      .toc span {
         display: block;
+        margin-bottom: 5px;
+      }
+      .toc a {
+        display: inline;
         color: blue;
         text-decoration: none;
-        margin-bottom: 5px;
       }
       img {
         width: 400px;
@@ -30,46 +35,37 @@
   </head>
   <body>
     <h1>돼지감자차</h1>
-
     <div class="toc">
-      <div><b>목차</b></div>
-      <a href="#1">1. 개요</a>
-      <a href="#2">2. 효능</a>
-      <a href="#3">3. 부작용</a>
-      <a href="#4">4. 제조 방법</a>
+      <div>
+          <span><a href="#s-1">1</a>. 개요</span>
+          <span><a href="#s-2">2</a>. 효능</span>
+          <span><a href="#s-3">3</a>. 타임라인</span>
+          <span><a href="#s-4">4</a>. 제조 방법</span>
+      </div>
     </div>
-
     <!-- alt 속성 없음 -->
-    <img src="https://i.namu.wiki/i/EpM2c3lcvCTPJ4dvUBrozu0c1mRPQpuXyQNQeL1LfmetW4YXQcJh0f6fJ-YSARKatyoyL2BIXgpkVyHgblWI4w.webp">
-
-    <div id="1" class="section">
+    <div id="s-1" class="section">
       <h2>1. 개요</h2>
+      <img src="https://i.namu.wiki/i/EpM2c3lcvCTPJ4dvUBrozu0c1mRPQpuXyQNQeL1LfmetW4YXQcJh0f6fJ-YSARKatyoyL2BIXgpkVyHgblWI4w.webp">
       <p>돼지감자차는 돼지감자를 말려서 끓인 차다. 인슐린 분해 효소를 억제한다는 주장도 있다.</p>
     </div>
-
-    <div id="2" class="section">
+    <div id="s-2" class="section">
       <h2>2. 효능</h2>
       <p>혈당 조절, 다이어트, 변비 개선 등 다양한 효과가 있다고 하지만, 과학적 근거는 불충분하다.</p>
     </div>
-
-    <div id="3" class="section">
+    <div id="s-3" class="section">
       <h2>3. 부작용</h2>
       <p>과다 섭취 시 복통, 설사 등의 부작용이 발생할 수 있다. 하지만 대체로 안전하다고 알려져 있다.</p>
     </div>
-
-    <div id="4" class="section">
+    <div id="s-4" class="section">
       <h2>4. 제조 방법</h2>
       <p>돼지감자를 씻고, 얇게 썬 뒤, 말린 후, 끓인다.</p>
     </div>
-
     <!-- 접근성 완전 무시: 링크 텍스트 없이 이미지 링크 -->
     <a href="https://namu.wiki/w/돼지감자차">
       <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSb2TMxhKHA4_j1kyu6dNqumZgQn2PJ-Yp0WA&s">
     </a>
 
-    <!-- 색 대비 부족 -->
-    <p style="color: lightgray; background-color: white;">
-      출처: 나무위키
-    </p>
+    <iframe src="https://www.youtube.com/embed/YAX1AO9ajvw" width="560" height="315"></iframe>
   </body>
 </html>
