@@ -8,6 +8,7 @@ export class ARIAManager {
     let count = 0;
 
     count += this.applyRoles(root);
+    count += this.applySplitTextLabels(root);
     count += this.applyLabels(root);
     count += this.applyStates(root);
     count += this.applyProperties(root);
@@ -326,6 +327,64 @@ export class ARIAManager {
     const rect = el.getBoundingClientRect();
     const docHeight = document.documentElement.scrollHeight;
     return rect.bottom > docHeight - 500; // Within bottom 500px
+  }
+
+
+  /**
+   * Improves accessibility for links with split text
+   * Example: <span><a>1</a>. 개요</span> → <span><a aria-label="1. 개요">1</a><span aria-hidden="true">. 개요</span></span>
+   */
+  private applySplitTextLabels(root: HTMLElement): number {
+    let count = 0;
+
+    // Find elements that contain both <a> and text nodes
+    const potentialParents = root.querySelectorAll('*');
+    
+    potentialParents.forEach(parent => {
+      if (!(parent instanceof HTMLElement)) return;
+      
+      // Check if parent has exactly one <a> tag and text nodes
+      const links = Array.from(parent.children).filter(child => child.tagName === 'A');
+      if (links.length !== 1) return;
+      
+      const link = links[0] as HTMLAnchorElement;
+      if (link.hasAttribute('aria-label')) return;
+      
+      // Get all text content from parent
+      const fullText = parent.textContent?.trim();
+      if (!fullText || fullText.length === 0) return;
+      
+      // Check if there's text outside the link
+      const linkText = link.textContent?.trim() || '';
+      if (fullText === linkText) return; // No split text
+      
+      // Apply aria-label to link
+      link.setAttribute('aria-label', fullText);
+      count++;
+      
+      // Wrap text nodes outside <a> with aria-hidden spans
+      const childNodes = Array.from(parent.childNodes);
+      childNodes.forEach(node => {
+        // Skip if it's the link itself or already processed
+        if (node === link) return;
+        if (node.nodeType === Node.ELEMENT_NODE && 
+            (node as HTMLElement).hasAttribute('aria-hidden')) return;
+        
+        // Text node - wrap it
+        if (node.nodeType === Node.TEXT_NODE) {
+          const text = node.textContent?.trim();
+          if (text && text.length > 0) {
+            const span = document.createElement('span');
+            span.setAttribute('aria-hidden', 'true');
+            span.textContent = node.textContent;
+            parent.replaceChild(span, node);
+            count++;
+          }
+        }
+      });
+    });
+
+    return count;
   }
 
   private inferLabel(element: HTMLElement): string | null {
