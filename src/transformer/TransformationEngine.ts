@@ -505,7 +505,7 @@ export class TransformationEngine {
 
   /**
    * Add context to anchor links from surrounding text
-   * Example: <a href="#s-1">1</a>. 개요 → <a aria-label="1. 개요">1</a><span aria-hidden="true">. 개요</span>
+   * Example: <span><a href="#s-1">1</a>. 개요</span> → <span><a aria-label="1. 개요">1</a><span aria-hidden="true">. 개요</span></span>
    */
   private async addContextToAnchor(anchor: HTMLAnchorElement): Promise<TransformationLog | null> {
     if (anchor.hasAttribute('aria-label')) {
@@ -522,75 +522,60 @@ export class TransformationEngine {
     const parentText = parent.textContent?.trim() || '';
     if (parentText.length <= linkText.length) return null;
 
-    // Extract surrounding text (text nodes after the anchor)
-    let surroundingText = '';
-    let currentNode: Node | null = anchor.nextSibling;
-
-    while (currentNode && surroundingText.length < 50) {
-      if (currentNode.nodeType === Node.TEXT_NODE) {
-        const text = currentNode.textContent?.trim() || '';
-        if (text) {
-          surroundingText += text;
+    // Extract all text content from parent (including all child text nodes)
+    let fullText = '';
+    const extractText = (node: Node): void => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent || '';
+        if (text.trim()) {
+          fullText += text;
         }
-      } else if (currentNode.nodeType === Node.ELEMENT_NODE) {
-        // Stop at next interactive element
-        const elem = currentNode as HTMLElement;
-        if (['A', 'BUTTON', 'INPUT'].includes(elem.tagName)) {
-          break;
-        }
-      }
-      currentNode = currentNode.nextSibling;
-    }
-
-    if (!surroundingText) return null;
-
-    // Create full context label
-    const fullLabel = `${linkText}${surroundingText}`.trim();
-
-    // Add aria-label to anchor
-    anchor.setAttribute('aria-label', fullLabel);
-
-    // Wrap surrounding text nodes with aria-hidden span
-    currentNode = anchor.nextSibling;
-    const nodesToWrap: Node[] = [];
-
-    while (currentNode) {
-      if (currentNode.nodeType === Node.TEXT_NODE) {
-        const text = currentNode.textContent?.trim() || '';
-        if (text && surroundingText.includes(text)) {
-          nodesToWrap.push(currentNode);
-        }
-      } else if (currentNode.nodeType === Node.ELEMENT_NODE) {
-        const elem = currentNode as HTMLElement;
-        if (['A', 'BUTTON', 'INPUT'].includes(elem.tagName)) {
-          break;
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        // Include text from all elements except the anchor itself
+        if (node !== anchor) {
+          node.childNodes.forEach(child => extractText(child));
+        } else {
+          fullText += node.textContent || '';
         }
       }
+    };
 
-      const next = currentNode.nextSibling;
-      currentNode = next;
+    parent.childNodes.forEach(child => extractText(child));
+    fullText = fullText.trim();
 
-      if (nodesToWrap.length > 0 && (!currentNode || currentNode.nodeType === Node.ELEMENT_NODE)) {
-        break;
+    if (fullText.length <= linkText.length) return null;
+
+    // Add aria-label with full context
+    anchor.setAttribute('aria-label', fullText);
+
+    // Find and wrap text nodes after the anchor with aria-hidden
+    const wrapTextNodes = (node: Node): void => {
+      if (node === anchor) return;
+
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent?.trim() || '';
+        if (text && node.parentElement === parent) {
+          // Wrap this text node
+          const wrapper = document.createElement('span');
+          wrapper.setAttribute('aria-hidden', 'true');
+          wrapper.textContent = node.textContent;
+          node.parentElement?.replaceChild(wrapper, node);
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE && node !== anchor) {
+        const elem = node as HTMLElement;
+        // Don't wrap interactive elements
+        if (!['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(elem.tagName)) {
+          elem.setAttribute('aria-hidden', 'true');
+        }
       }
-    }
+    };
 
-    // Wrap text nodes in aria-hidden span
-    if (nodesToWrap.length > 0) {
-      const wrapper = document.createElement('span');
-      wrapper.setAttribute('aria-hidden', 'true');
-
-      // Insert wrapper after anchor
-      if (anchor.nextSibling) {
-        parent.insertBefore(wrapper, anchor.nextSibling);
-      } else {
-        parent.appendChild(wrapper);
-      }
-
-      // Move text nodes into wrapper
-      nodesToWrap.forEach(node => {
-        wrapper.appendChild(node);
-      });
+    // Process all siblings after the anchor
+    let sibling = anchor.nextSibling;
+    while (sibling) {
+      const next = sibling.nextSibling;
+      wrapTextNodes(sibling);
+      sibling = next;
     }
 
     return {
@@ -598,7 +583,7 @@ export class TransformationEngine {
       description: '앵커 링크에 주변 텍스트 컨텍스트 추가',
       element: this.getElementDescription(anchor),
       before: `"${linkText}"`,
-      after: `aria-label="${fullLabel.slice(0, 30)}${fullLabel.length > 30 ? '...' : ''}"`
+      after: `aria-label="${fullText.slice(0, 40)}${fullText.length > 40 ? '...' : ''}"`
     };
   }
 }
