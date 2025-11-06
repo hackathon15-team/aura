@@ -172,25 +172,33 @@ class AURA {
   }
 
   private async onDOMChange(mutations: MutationRecord[]): Promise<void> {
-    const addedNodes: Node[] = [];
+    const elementsToScan: Set<HTMLElement> = new Set();
+
     for (const mutation of mutations) {
+      // Handle added nodes
       mutation.addedNodes.forEach(node => {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          addedNodes.push(node);
+        if (node.nodeType === Node.ELEMENT_NODE && node instanceof HTMLElement) {
+          elementsToScan.add(node);
         }
       });
+
+      // Handle text changes (Vue rendering) - scan parent element
+      if (mutation.type === 'characterData') {
+        const parent = mutation.target.parentElement;
+        if (parent) {
+          elementsToScan.add(parent);
+        }
+      }
     }
 
-    if (addedNodes.length === 0) return;
+    if (elementsToScan.size === 0) return;
 
-    for (const node of addedNodes) {
-      if (node instanceof HTMLElement) {
-        const issues = await this.scanner.scan(node);
-        for (const issue of issues) {
-          await this.transformer.transform(issue);
-        }
-        await this.ariaManager.applyARIA(node);
+    for (const element of elementsToScan) {
+      const issues = await this.scanner.scan(element);
+      for (const issue of issues) {
+        await this.transformer.transform(issue);
       }
+      await this.ariaManager.applyARIA(element);
     }
   }
 

@@ -39,7 +39,8 @@ export class AccessibilityObserver {
         'disabled',
         'hidden',
       ],
-      characterData: false,   // Ignore text changes
+      characterData: true,    // Watch text changes (Vue rendering)
+      characterDataOldValue: true,
     });
 
     this.isObserving = true;
@@ -109,6 +110,21 @@ export class AccessibilityObserver {
       // For childList mutations, only process if new elements added
       if (mutation.type === 'childList') {
         return mutation.addedNodes.length > 0;
+      }
+
+      // For characterData mutations (text changes - Vue rendering)
+      if (mutation.type === 'characterData') {
+        // Only process if text actually changed from empty to non-empty
+        const oldValue = mutation.oldValue?.trim() || '';
+        const newValue = (mutation.target as Text).textContent?.trim() || '';
+
+        // Process if text was added (empty → non-empty) or significantly changed
+        if (oldValue.length === 0 && newValue.length > 0) {
+          return true;
+        }
+
+        // Skip minor text changes
+        return false;
       }
 
       // For attribute mutations on class/style, check if visibility changed
@@ -255,7 +271,8 @@ export class AccessibilityObserver {
           'disabled',
           'hidden',
         ],
-        characterData: false,
+        characterData: true,
+        characterDataOldValue: true,
       });
       this.isObserving = true;
     }
