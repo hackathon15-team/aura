@@ -128,7 +128,7 @@ export class ARIAManager {
       if (title && title.trim()) {
         label = title.trim();
       } else {
-        label = this.inferLabel(el);
+        label = this.inferLabel(el) || '';
       }
 
       if (label && label.length > 0 && label.length < 100) {
