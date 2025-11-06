@@ -38,12 +38,49 @@
 
   <div class="video-container">
     <iframe
+      id="ytplayer"
       src="https://www.youtube.com/embed/jNQXAC9IVRw"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       referrerpolicy="strict-origin-when-cross-origin"
       allowfullscreen>
     </iframe>
   </div>
+
+  <script>
+    const iframe = document.getElementById('ytplayer');
+
+    iframe.addEventListener('load', () => {
+      try {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+        const walker = document.createTreeWalker(
+          iframeDoc.body,
+          NodeFilter.SHOW_TEXT,
+          null
+        );
+
+        const nodesToReplace = [];
+        let node;
+
+        while (node = walker.nextNode()) {
+          const text = node.textContent;
+          if (text.includes('Me at the zoo') || text.includes('Youtube Video Player')) {
+            nodesToReplace.push(node);
+          }
+        }
+
+        nodesToReplace.forEach(node => {
+          node.textContent = node.textContent
+            .replace(/Me at the zoo/g, '')
+            .replace(/Youtube Video Player/g, '');
+        });
+
+        console.log('[test-iframe] Removed YouTube texts');
+      } catch (e) {
+        console.log('[test-iframe] Cannot access iframe content (cross-origin):', e.message);
+      }
+    });
+  </script>
 
 </body>
 </html>
