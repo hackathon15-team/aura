@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AURA - Label-Input 연결 테스트</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      line-height: 1.6;
+    }
+
+    h1 {
+      color: #2563eb;
+      border-bottom: 3px solid #2563eb;
+      padding-bottom: 10px;
+    }
+
+    .test-case {
+      margin: 30px 0;
+      padding: 20px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      background: #f9fafb;
+    }
+
+    .test-case h3 {
+      margin-top: 0;
+      color: #1f2937;
+    }
+
+    .should-fix {
+      border-color: #ef4444;
+      background: #fef2f2;
+    }
+
+    .should-skip {
+      border-color: #10b981;
+      background: #f0fdf4;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
+    .badge-fix {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge-skip {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    input, textarea, select {
+      display: block;
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .inline-label {
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    .inline-label input {
+      display: inline-block;
+      width: auto;
+      margin-left: 5px;
+    }
+
+    code {
+      background: #1f2937;
+      color: #f9fafb;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 13px;
+    }
+
+    .note {
+      margin-top: 15px;
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+      border-left: 4px solid #3b82f6;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔗 AURA Label-Input 연결 테스트</h1>
+
+  <p>AURA 확장 프로그램을 활성화하고 콘솔을 확인하세요. "Label-Input 연결" 로그를 확인할 수 있습니다.</p>
+
+  <!-- Case 1: 연결 안 된 label + input (자동 연결되어야 함) -->
+  <div class="test-case should-fix">
+    <h3>Case 1: 연결 안 된 label + input <span class="badge badge-fix">자동 연결</span></h3>
+    <label>이름</label>
+    <input type="text" placeholder="이름을 입력하세요">
+    <div class="note">
+      ✅ AURA가 자동으로 <code>for</code>와 <code>id</code>를 추가해야 함
+    </div>
+  </div>
+
+  <!-- Case 2: textarea -->
+  <div class="test-case should-fix">
+    <h3>Case 2: 연결 안 된 label + textarea <span class="badge badge-fix">자동 연결</span></h3>
+    <label>자기소개</label>
+    <textarea rows="3" placeholder="자기소개를 입력하세요"></textarea>
+    <div class="note">
+      ✅ textarea도 자동 연결되어야 함
+    </div>
+  </div>
+
+  <!-- Case 3: select -->
+  <div class="test-case should-fix">
+    <h3>Case 3: 연결 안 된 label + select <span class="badge badge-fix">자동 연결</span></h3>
+    <label>국가</label>
+    <select>
+      <option>대한민국</option>
+      <option>미국</option>
+      <option>일본</option>
+    </select>
+    <div class="note">
+      ✅ select도 자동 연결되어야 함
+    </div>
+  </div>
+
+  <!-- Case 4: 이미 연결된 경우 (건드리지 않아야 함) -->
+  <div class="test-case should-skip">
+    <h3>Case 4: 이미 올바르게 연결된 경우 <span class="badge badge-skip">건드리지 않음</span></h3>
+    <label for="email">이메일</label>
+    <input type="email" id="email" placeholder="email@example.com">
+    <div class="note">
+      ⏭️ 이미 <code>for="email"</code>과 <code>id="email"</code>로 연결됨
+    </div>
+  </div>
+
+  <!-- Case 5: label이 input을 감싸는 경우 (건드리지 않아야 함) -->
+  <div class="test-case should-skip">
+    <h3>Case 5: label이 input을 감싸는 경우 <span class="badge badge-skip">건드리지 않음</span></h3>
+    <label class="inline-label">
+      <input type="checkbox">
+      약관에 동의합니다
+    </label>
+    <div class="note">
+      ⏭️ 이미 유효한 패턴 (label이 input을 감쌈)
+    </div>
+  </div>
+
+  <!-- Case 6: hidden input (스킵되어야 함) -->
+  <div class="test-case should-skip">
+    <h3>Case 6: hidden input <span class="badge badge-skip">건드리지 않음</span></h3>
+    <label>숨겨진 필드</label>
+    <input type="hidden" value="secret">
+    <div class="note">
+      ⏭️ <code>type="hidden"</code>은 스킵됨
+    </div>
+  </div>
+
+  <!-- Case 7: label과 input 사이에 다른 요소 (연결 안 됨) -->
+  <div class="test-case should-skip">
+    <h3>Case 7: label과 input 사이에 다른 요소 <span class="badge badge-skip">건드리지 않음</span></h3>
+    <label>전화번호</label>
+    <div style="height: 10px;"></div>
+    <input type="tel" placeholder="010-1234-5678">
+    <div class="note">
+      ⏭️ nextElementSibling이 input이 아니므로 스킵됨
+    </div>
+  </div>
+
+  <!-- Case 8: 여러 개 연속 -->
+  <div class="test-case should-fix">
+    <h3>Case 8: 여러 개 연속으로 연결 안 된 경우 <span class="badge badge-fix">모두 자동 연결</span></h3>
+    <label>주소</label>
+    <input type="text" placeholder="도로명 주소">
+
+    <label>상세주소</label>
+    <input type="text" placeholder="상세주소">
+
+    <label>우편번호</label>
+    <input type="text" placeholder="12345">
+
+    <div class="note">
+      ✅ 3개 모두 자동으로 연결되어야 함
+    </div>
+  </div>
+
+  <script>
+    // AURA 확장 프로그램이 로드되면 자동으로 처리됨
+    console.log('=== Label-Input 연결 테스트 페이지 로드됨 ===');
+    console.log('AURA 확장 프로그램을 활성화하고 콘솔에서 "Label-Input 연결" 로그를 확인하세요.');
+
+    // 5초 후 결과 확인
+    setTimeout(() => {
+      console.log('\n=== 연결 결과 확인 ===');
+      const labels = document.querySelectorAll('label');
+      let connectedCount = 0;
+
+      labels.forEach((label, index) => {
+        const forAttr = label.getAttribute('for');
+        if (forAttr) {
+          const input = document.getElementById(forAttr);
+          if (input) {
+            console.log(`✅ Label ${index + 1}: "${label.textContent.trim()}" → for="${forAttr}"`);
+            connectedCount++;
+          }
+        }
+      });
+
+      console.log(`\n총 ${labels.length}개 label 중 ${connectedCount}개가 for 속성을 가지고 있습니다.`);
+      console.log('Case 1, 2, 3, 4, 8의 label들이 for 속성을 가져야 합니다.');
+    }, 5000);
+  </script>
+</body>
+</html>
