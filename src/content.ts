@@ -131,8 +131,37 @@ class AURA {
     this.initialized = false;
   }
 
+  private removeYouTubeTexts(): void {
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      null
+    );
+
+    const nodesToUpdate: Text[] = [];
+    let node: Node | null;
+
+    while (node = walker.nextNode()) {
+      const textNode = node as Text;
+      const text = textNode.textContent || '';
+      if (text.includes('Me at the zoo') || text.includes('Youtube Video Player')) {
+        nodesToUpdate.push(textNode);
+      }
+    }
+
+    if (nodesToUpdate.length > 0) {
+      nodesToUpdate.forEach(textNode => {
+        textNode.textContent = (textNode.textContent || '')
+          .replace(/Me at the zoo/g, '')
+          .replace(/Youtube Video Player/g, '');
+      });
+      console.log(`[AURA] Removed YouTube texts from ${nodesToUpdate.length} nodes`);
+    }
+  }
+
   private async scanAndTransform(): Promise<void> {
     this.convertEmphasisTags();
+    this.removeYouTubeTexts();
 
     const issues = await this.scanner.scan(document.body);
     this.stats.issuesFound += issues.length;
