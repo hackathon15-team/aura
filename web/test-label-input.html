@@ -2,50 +2,141 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Label-Input 연결 테스트</title>
+  <title>AURA - Label-Input 자동 연결 시연</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #2563eb;
+    }
+    .demo-section {
+      margin: 30px 0;
+      padding: 20px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+    }
+    .before-after {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .before, .after {
+      padding: 15px;
+      border-radius: 4px;
+    }
+    .before {
+      background: #fee;
+    }
+    .after {
+      background: #efe;
+    }
+    h3 {
+      margin-top: 0;
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: 500;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 13px;
+    }
+    .result {
+      margin-top: 30px;
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      font-family: monospace;
+      white-space: pre;
+    }
+  </style>
 </head>
 <body>
-  <h1>Label-Input 연결 테스트</h1>
+  <h1>🔗 AURA - Label-Input 자동 연결 시연</h1>
 
-  <h2>자동 연결되어야 함:</h2>
+  <p>AURA 확장 프로그램이 자동으로 <code>&lt;label&gt;</code>과 <code>&lt;input&gt;</code>을 연결합니다.</p>
 
-  <label>이름</label>
-  <input type="text">
-  <br><br>
+  <div class="demo-section">
+    <h2>📝 테스트 폼</h2>
 
-  <label>이메일</label>
-  <input type="email">
-  <br><br>
+    <div class="before-after">
+      <div class="before">
+        <h3>❌ Before (연결 안 됨)</h3>
+        <code>&lt;label&gt;이름&lt;/label&gt;</code><br>
+        <code>&lt;input type="text"&gt;</code>
+      </div>
+      <div class="after">
+        <h3>✅ After (AURA가 자동 연결)</h3>
+        <code>&lt;label for="aura-input-xyz"&gt;</code><br>
+        <code>&lt;input id="aura-input-xyz"&gt;</code>
+      </div>
+    </div>
 
-  <label>메시지</label>
-  <textarea></textarea>
-  <br><br>
+    <div style="margin-top: 30px; padding: 20px; background: white; border: 2px dashed #2563eb;">
+      <label>이름</label>
+      <input type="text" placeholder="홍길동">
 
-  <label>국가</label>
-  <select>
-    <option>한국</option>
-    <option>미국</option>
-  </select>
-  <br><br>
+      <label>이메일</label>
+      <input type="email" placeholder="email@example.com">
 
-  <h2>건드리지 않아야 함:</h2>
+      <label>메시지</label>
+      <textarea rows="3" placeholder="메시지를 입력하세요"></textarea>
 
-  <label for="already">이미 연결됨</label>
-  <input type="text" id="already">
-  <br><br>
+      <label>국가</label>
+      <select>
+        <option>대한민국</option>
+        <option>미국</option>
+        <option>일본</option>
+      </select>
+    </div>
+  </div>
 
-  <label>
-    <input type="checkbox"> 감싸진 input
-  </label>
-  <br><br>
+  <div class="demo-section">
+    <h2>✅ 이미 올바른 경우 (건드리지 않음)</h2>
+    <label for="phone">전화번호</label>
+    <input type="tel" id="phone" placeholder="010-1234-5678">
+  </div>
+
+  <div class="result" id="result">5초 후 결과가 여기에 표시됩니다...</div>
 
   <script>
     setTimeout(() => {
-      console.log('=== 5초 후 결과 ===');
-      document.querySelectorAll('label').forEach((label, i) => {
+      const labels = document.querySelectorAll('label');
+      let result = '=== AURA 처리 결과 ===\n\n';
+
+      labels.forEach((label, i) => {
         const forAttr = label.getAttribute('for');
-        console.log(`Label ${i+1}: for="${forAttr || '없음'}"`);
+        const text = label.textContent.trim().slice(0, 20);
+        if (forAttr) {
+          const input = document.getElementById(forAttr);
+          if (input && forAttr.startsWith('aura-input-')) {
+            result += `✅ "${text}" → for="${forAttr}" (AURA가 자동 생성)\n`;
+          } else {
+            result += `⏭️ "${text}" → for="${forAttr}" (이미 연결됨)\n`;
+          }
+        } else {
+          result += `❌ "${text}" → for 없음\n`;
+        }
       });
+
+      document.getElementById('result').textContent = result;
+
+      // 콘솔에도 출력
+      console.log(result);
     }, 5000);
   </script>
 </body>
