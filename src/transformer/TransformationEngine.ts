@@ -508,42 +508,31 @@ export class TransformationEngine {
    * Example: <span><a href="#s-1">1</a>. 개요</span> → <span><a aria-label="1. 개요">1</a><span aria-hidden="true">. 개요</span></span>
    */
   private async addContextToAnchor(anchor: HTMLAnchorElement): Promise<TransformationLog | null> {
+    console.log('[TransformationEngine] addContextToAnchor called for:', anchor.getAttribute('href'));
+
     if (anchor.hasAttribute('aria-label')) {
+      console.log('[TransformationEngine] Already has aria-label, skipping');
       return null;
     }
 
     const parent = anchor.parentElement;
-    if (!parent) return null;
+    if (!parent) {
+      console.log('[TransformationEngine] No parent, skipping');
+      return null;
+    }
 
-    const linkText = anchor.textContent?.trim() || '';
-    if (!linkText) return null;
-
-    // Get parent's full text
+    // Get parent's full text first
     const parentText = parent.textContent?.trim() || '';
-    if (parentText.length <= linkText.length) return null;
+    console.log('[TransformationEngine] parentText:', parentText);
 
-    // Extract all text content from parent (including all child text nodes)
-    let fullText = '';
-    const extractText = (node: Node): void => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        const text = node.textContent || '';
-        if (text.trim()) {
-          fullText += text;
-        }
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        // Include text from all elements except the anchor itself
-        if (node !== anchor) {
-          node.childNodes.forEach(child => extractText(child));
-        } else {
-          fullText += node.textContent || '';
-        }
-      }
-    };
+    if (!parentText) {
+      console.log('[TransformationEngine] No parent text, skipping');
+      return null;
+    }
 
-    parent.childNodes.forEach(child => extractText(child));
-    fullText = fullText.trim();
-
-    if (fullText.length <= linkText.length) return null;
+    // Use parent text as the full label
+    const fullText = parentText;
+    console.log('[TransformationEngine] Using fullText:', fullText);
 
     // Add aria-label with full context
     anchor.setAttribute('aria-label', fullText);
@@ -577,6 +566,8 @@ export class TransformationEngine {
       wrapTextNodes(sibling);
       sibling = next;
     }
+
+    const linkText = anchor.textContent?.trim() || '';
 
     return {
       type: 'Anchor 컨텍스트',
