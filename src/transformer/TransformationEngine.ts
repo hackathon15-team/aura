@@ -51,6 +51,10 @@ export class TransformationEngine {
           log = await this.addFormLabel(issue.element);
           break;
 
+        case IssueType.UNCONNECTED_LABEL_INPUT:
+          log = await this.connectLabelToInput(issue.element as HTMLLabelElement);
+          break;
+
         default:
           // Other issues handled by ARIAManager
           break;
@@ -446,5 +450,52 @@ export class TransformationEngine {
         after: `aria-label="${fallbackLabel}"`
       };
     }
+  }
+
+  /**
+   * Connect label to adjacent input using for-id relationship
+   * Generates unique ID if needed
+   */
+  private async connectLabelToInput(label: HTMLLabelElement): Promise<TransformationLog | null> {
+    const nextElement = label.nextElementSibling;
+    if (!nextElement) return null;
+
+    // Check if next sibling is a form element
+    const isFormElement = ['INPUT', 'TEXTAREA', 'SELECT'].includes(nextElement.tagName);
+    if (!isFormElement) return null;
+
+    const input = nextElement as HTMLInputElement;
+
+    // Skip hidden inputs
+    if (input.type === 'hidden') return null;
+
+    // Skip if label wraps the input (valid pattern)
+    if (label.contains(input)) return null;
+
+    // Skip if already properly connected
+    const labelFor = label.getAttribute('for');
+    if (labelFor && input.id && labelFor === input.id) {
+      return null;
+    }
+
+    const before = label.hasAttribute('for')
+      ? `for="${label.getAttribute('for')}"`
+      : 'for 속성 없음';
+
+    // Generate unique ID if input doesn't have one
+    if (!input.id) {
+      input.id = `aura-input-${Math.random().toString(36).substring(2, 11)}`;
+    }
+
+    // Connect label to input
+    label.setAttribute('for', input.id);
+
+    return {
+      type: 'Label-Input 연결',
+      description: 'label과 input을 for-id로 연결',
+      element: this.getElementDescription(label),
+      before,
+      after: `for="${input.id}"`
+    };
   }
 }

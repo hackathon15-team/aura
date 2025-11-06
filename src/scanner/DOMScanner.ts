@@ -24,6 +24,7 @@ export enum IssueType {
   COLOR_ONLY_INDICATION = 'color-only-indication',
   UNLABELED_FORM_ELEMENT = 'unlabeled-form-element',
   MISSING_FORM_VALIDATION = 'missing-form-validation',
+  UNCONNECTED_LABEL_INPUT = 'unconnected-label-input',
 }
 
 export enum Priority {
@@ -365,6 +366,38 @@ export class DOMScanner {
           type: IssueType.UNLABELED_FORM_ELEMENT,
           priority: Priority.P0,
           description: 'Form input missing label',
+        });
+      }
+    });
+
+    // Check for labels followed by inputs without for-id connection
+    const allLabels = root.querySelectorAll('label');
+    allLabels.forEach((label) => {
+      const nextElement = label.nextElementSibling;
+      if (!nextElement) return;
+
+      // Check if next sibling is a form element
+      const isFormElement = ['INPUT', 'TEXTAREA', 'SELECT'].includes(nextElement.tagName);
+      if (!isFormElement) return;
+
+      const input = nextElement as HTMLInputElement;
+
+      // Skip hidden inputs
+      if (input.type === 'hidden') return;
+
+      // Skip if label wraps the input (valid pattern)
+      if (label.contains(input)) return;
+
+      // Check if already properly connected
+      const labelFor = label.getAttribute('for');
+      const isConnected = labelFor && input.id && labelFor === input.id;
+
+      if (!isConnected) {
+        issues.push({
+          element: label,
+          type: IssueType.UNCONNECTED_LABEL_INPUT,
+          priority: Priority.P0,
+          description: 'Label not connected to adjacent input element',
         });
       }
     });
