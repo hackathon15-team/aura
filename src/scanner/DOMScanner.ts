@@ -62,12 +62,17 @@ export class DOMScanner {
   }
 
   private deduplicateIssues(issues: AccessibilityIssue[]): AccessibilityIssue[] {
-    const seen = new Set<HTMLElement>();
+    const seen = new Map<HTMLElement, Set<IssueType>>();
     const uniqueIssues: AccessibilityIssue[] = [];
 
     for (const issue of issues) {
       if (!seen.has(issue.element)) {
-        seen.add(issue.element);
+        seen.set(issue.element, new Set());
+      }
+
+      const types = seen.get(issue.element)!;
+      if (!types.has(issue.type)) {
+        types.add(issue.type);
         uniqueIssues.push(issue);
       }
     }
@@ -117,7 +122,6 @@ export class DOMScanner {
       }
 
       // Check CSS-only emphasis (with sampling for performance)
-      // Only check 20% of elements to reduce performance impact
       if (Math.random() < 0.2) {
         const computed = window.getComputedStyle(element);
 

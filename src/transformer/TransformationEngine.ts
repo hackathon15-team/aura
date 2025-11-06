@@ -1,4 +1,3 @@
-
 import { AccessibilityIssue, IssueType } from '../scanner/DOMScanner';
 
 export interface TransformationLog {
@@ -10,7 +9,7 @@ export interface TransformationLog {
 }
 
 export class TransformationEngine {
-  private transformedElements = new WeakSet<HTMLElement>();
+  private transformedElements = new WeakMap<HTMLElement, Set<IssueType>>();
 
   private keyboardHandlers = new WeakMap<HTMLElement, (event: KeyboardEvent) => void>();
   private readonly OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
@@ -19,7 +18,12 @@ export class TransformationEngine {
   private readonly VISION_API_RETRIES = 2;
 
   async transform(issue: AccessibilityIssue): Promise<TransformationLog | null> {
-    if (this.transformedElements.has(issue.element)) {
+    if (!this.transformedElements.has(issue.element)) {
+      this.transformedElements.set(issue.element, new Set());
+    }
+
+    const processedTypes = this.transformedElements.get(issue.element)!;
+    if (processedTypes.has(issue.type)) {
       return null;
     }
 
@@ -52,7 +56,7 @@ export class TransformationEngine {
           break;
       }
 
-      this.transformedElements.add(issue.element);
+      processedTypes.add(issue.type);
       return log;
     } catch (error) {
       console.error('[TransformationEngine] Failed to transform element:', error);
@@ -133,17 +137,15 @@ export class TransformationEngine {
   }
 
   /**
-   * Make CSS-styled emphasis accessible WITHOUT changing visual appearance
-   * Adds visually-hidden semantic indicator instead of overriding text
+   * Make CSS-styled emphasis accessible
    */
   private async makeEmphasisAccessible(element: HTMLElement): Promise<TransformationLog | null> {
-    // Don't process if already has semantic children
+    // For CSS-styled elements, don't process if already has semantic children
     const hasSemanticEmphasis = element.querySelector('strong, em, b, i');
     if (hasSemanticEmphasis) {
       return null;
     }
 
-    // Check if element already has ARIA or if text is too long
     const existingLabel = element.getAttribute('aria-label');
     const text = element.textContent?.trim();
 
@@ -151,7 +153,6 @@ export class TransformationEngine {
       return null;
     }
 
-    // Get computed style (only when necessary)
     const computed = window.getComputedStyle(element);
     const isBold = computed.fontWeight === 'bold' || parseInt(computed.fontWeight) >= 700;
     const isItalic = computed.fontStyle === 'italic';
@@ -160,9 +161,6 @@ export class TransformationEngine {
       return null;
     }
 
-    // Instead of role="text" + aria-label (which overrides original text),
-    // just add a data attribute for screen readers to detect
-    // Screen readers will read the original text as-is
     if (isBold) {
       element.setAttribute('data-weally-emphasis', 'strong');
     } else if (isItalic) {

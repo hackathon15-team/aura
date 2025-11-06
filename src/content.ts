@@ -75,6 +75,45 @@ class AURA {
     this.stats.lastUpdated = Date.now();
   }
 
+  private convertEmphasisTags(): void {
+    let convertedCount = 0;
+
+    // <b> → <strong>
+    document.querySelectorAll('b').forEach(b => {
+      const strong = document.createElement('strong');
+      strong.innerHTML = b.innerHTML;
+      Array.from(b.attributes).forEach(attr => {
+        strong.setAttribute(attr.name, attr.value);
+      });
+      b.replaceWith(strong);
+      convertedCount++;
+    });
+
+    // <i> → <em>
+    document.querySelectorAll('i').forEach(i => {
+      const em = document.createElement('em');
+      em.innerHTML = i.innerHTML;
+      Array.from(i.attributes).forEach(attr => {
+        em.setAttribute(attr.name, attr.value);
+      });
+      i.replaceWith(em);
+      convertedCount++;
+    });
+
+    if (convertedCount > 0) {
+      console.log(`[AURA] Converted ${convertedCount} emphasis tags (<b>/<i> → <strong>/<em>)`);
+      this.addLog({
+        timestamp: Date.now(),
+        type: '강조 태그 변환',
+        description: `${convertedCount}개의 비시맨틱 강조 태그 변환`,
+        element: 'document.body',
+        before: '<b>, <i>',
+        after: '<strong>, <em>'
+      });
+      this.stats.issuesFixed += convertedCount;
+    }
+  }
+
   async initialize(): Promise<void> {
     if (this.initialized || !this.enabled) return;
 
@@ -95,11 +134,14 @@ class AURA {
   }
 
   private async scanAndTransform(): Promise<void> {
+    // 먼저 <b> → <strong>, <i> → <em> 변환 (동기적으로 빠르게)
+    this.convertEmphasisTags();
+
     const issues = await this.scanner.scan(document.body);
     this.stats.issuesFound += issues.length;
 
     const imageIssues = issues.filter(i => i.type === 'missing-alt-text');
-    console.log(`[AURA] Scan complete: ${issues.length} issues found${imageIssues.length > 0 ? ` (${imageIssues.length} images)` : ''}`);
+    console.log(`[AURA] Scan complete: ${issues.length} issues found (${imageIssues.length} images)`);
 
     for (const issue of issues) {
       try {
