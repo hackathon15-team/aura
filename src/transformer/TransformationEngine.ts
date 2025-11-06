@@ -521,53 +521,44 @@ export class TransformationEngine {
       return null;
     }
 
-    // Get parent's full text first
-    const parentText = parent.textContent?.trim() || '';
-    console.log('[TransformationEngine] parentText:', parentText);
+    // Build label from anchor text + next text node
+    let linkText = anchor.textContent?.trim() || '';
+    let nextText = '';
 
-    if (!parentText) {
-      console.log('[TransformationEngine] No parent text, skipping');
-      return null;
+    // Get text from next sibling (text node)
+    let nextSibling = anchor.nextSibling;
+    if (nextSibling && nextSibling.nodeType === Node.TEXT_NODE) {
+      nextText = nextSibling.textContent?.trim() || '';
     }
 
-    // Use parent text as the full label
-    const fullText = parentText;
-    console.log('[TransformationEngine] Using fullText:', fullText);
+    const fullText = (linkText + nextText).trim();
+    console.log('[TransformationEngine] fullText:', fullText);
+
+    if (!fullText) {
+      console.log('[TransformationEngine] No full text, skipping');
+      return null;
+    }
 
     // Add aria-label with full context
     anchor.setAttribute('aria-label', fullText);
 
-    // Find and wrap text nodes after the anchor with aria-hidden
-    const wrapTextNodes = (node: Node): void => {
-      if (node === anchor) return;
+    // Wrap text nodes after the anchor with aria-hidden
+    let currentSibling = anchor.nextSibling;
+    while (currentSibling) {
+      const next = currentSibling.nextSibling;
 
-      if (node.nodeType === Node.TEXT_NODE) {
-        const text = node.textContent?.trim() || '';
-        if (text && node.parentElement === parent) {
-          // Wrap this text node
+      if (currentSibling.nodeType === Node.TEXT_NODE) {
+        const text = currentSibling.textContent?.trim() || '';
+        if (text && currentSibling.parentElement === parent) {
           const wrapper = document.createElement('span');
           wrapper.setAttribute('aria-hidden', 'true');
-          wrapper.textContent = node.textContent;
-          node.parentElement?.replaceChild(wrapper, node);
-        }
-      } else if (node.nodeType === Node.ELEMENT_NODE && node !== anchor) {
-        const elem = node as HTMLElement;
-        // Don't wrap interactive elements
-        if (!['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(elem.tagName)) {
-          elem.setAttribute('aria-hidden', 'true');
+          wrapper.textContent = currentSibling.textContent;
+          currentSibling.parentElement?.replaceChild(wrapper, currentSibling);
         }
       }
-    };
 
-    // Process all siblings after the anchor
-    let sibling = anchor.nextSibling;
-    while (sibling) {
-      const next = sibling.nextSibling;
-      wrapTextNodes(sibling);
-      sibling = next;
+      currentSibling = next;
     }
-
-    const linkText = anchor.textContent?.trim() || '';
 
     return {
       type: 'Anchor 컨텍스트',
