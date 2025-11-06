@@ -25,7 +25,6 @@ export enum IssueType {
   UNLABELED_FORM_ELEMENT = 'unlabeled-form-element',
   MISSING_FORM_VALIDATION = 'missing-form-validation',
   UNCONNECTED_LABEL_INPUT = 'unconnected-label-input',
-  ANCHOR_NEEDS_CONTEXT = 'anchor-needs-context',
 }
 
 export enum Priority {
@@ -168,38 +167,6 @@ export class DOMScanner {
             priority: Priority.P0,
             description: 'Interactive element missing accessible label',
           });
-        }
-      }
-
-      // Check anchor links that need context from surrounding text
-      if (tagName === 'a') {
-        const href = element.getAttribute('href');
-        const isAnchorLink = href && (href.startsWith('#') || href === '');
-
-        if (isAnchorLink && !element.hasAttribute('aria-label')) {
-          const linkText = element.textContent?.trim() || '';
-          const parent = element.parentElement;
-
-          // Check if link text is short/meaningless and parent has additional context
-          if (parent && linkText.length < 10) {
-            let parentText = parent.textContent?.trim() || '';
-
-            // If parent has no text, try grandparent (for nested structures)
-            if (parentText.length === 0 && parent.parentElement) {
-              parentText = parent.parentElement.textContent?.trim() || '';
-            }
-
-            const hasAdditionalContext = parentText.length > linkText.length + 2;
-
-            if (hasAdditionalContext) {
-              issues.push({
-                element,
-                type: IssueType.ANCHOR_NEEDS_CONTEXT,
-                priority: Priority.P1,
-                description: 'Anchor link needs context from surrounding text',
-              });
-            }
-          }
         }
       }
 

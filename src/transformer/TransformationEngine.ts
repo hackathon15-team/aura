@@ -55,10 +55,6 @@ export class TransformationEngine {
           log = await this.connectLabelToInput(issue.element as HTMLLabelElement);
           break;
 
-        case IssueType.ANCHOR_NEEDS_CONTEXT:
-          log = await this.addContextToAnchor(issue.element as HTMLAnchorElement);
-          break;
-
         default:
           // Other issues handled by ARIAManager
           break;
@@ -503,69 +499,4 @@ export class TransformationEngine {
     };
   }
 
-  /**
-   * Add context to anchor links from surrounding text
-   * Example: <span><a href="#s-1">1</a>. 개요</span> → <span><a aria-label="1. 개요">1</a><span aria-hidden="true">. 개요</span></span>
-   */
-  private async addContextToAnchor(anchor: HTMLAnchorElement): Promise<TransformationLog | null> {
-    console.log('[TransformationEngine] addContextToAnchor called for:', anchor.getAttribute('href'));
-
-    if (anchor.hasAttribute('aria-label')) {
-      console.log('[TransformationEngine] Already has aria-label, skipping');
-      return null;
-    }
-
-    const parent = anchor.parentElement;
-    if (!parent) {
-      console.log('[TransformationEngine] No parent, skipping');
-      return null;
-    }
-
-    // Build label from anchor text + next text node
-    let linkText = anchor.textContent?.trim() || '';
-    let nextText = '';
-
-    // Get text from next sibling (text node)
-    let nextSibling = anchor.nextSibling;
-    if (nextSibling && nextSibling.nodeType === Node.TEXT_NODE) {
-      nextText = nextSibling.textContent?.trim() || '';
-    }
-
-    const fullText = (linkText + nextText).trim();
-    console.log('[TransformationEngine] fullText:', fullText);
-
-    if (!fullText) {
-      console.log('[TransformationEngine] No full text, skipping');
-      return null;
-    }
-
-    // Add aria-label with full context
-    anchor.setAttribute('aria-label', fullText);
-
-    // Wrap text nodes after the anchor with aria-hidden
-    let currentSibling = anchor.nextSibling;
-    while (currentSibling) {
-      const next = currentSibling.nextSibling;
-
-      if (currentSibling.nodeType === Node.TEXT_NODE) {
-        const text = currentSibling.textContent?.trim() || '';
-        if (text && currentSibling.parentElement === parent) {
-          const wrapper = document.createElement('span');
-          wrapper.setAttribute('aria-hidden', 'true');
-          wrapper.textContent = currentSibling.textContent;
-          currentSibling.parentElement?.replaceChild(wrapper, currentSibling);
-        }
-      }
-
-      currentSibling = next;
-    }
-
-    return {
-      type: 'Anchor 컨텍스트',
-      description: '앵커 링크에 주변 텍스트 컨텍스트 추가',
-      element: this.getElementDescription(anchor),
-      before: `"${linkText}"`,
-      after: `aria-label="${fullText.slice(0, 40)}${fullText.length > 40 ? '...' : ''}"`
-    };
-  }
 }
