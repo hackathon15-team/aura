@@ -111,9 +111,9 @@
 ### 1. 확장 프로그램 빌드
 
 ```bash
-git clone <repository-url>
-cd web-ally
-npm install
+git clone https://github.com/hackathon15-team/aura.git
+cd aura
+npm i
 npm run build
 ```
 
@@ -122,7 +122,7 @@ npm run build
 1. `chrome://extensions/` 열기
 2. "개발자 모드" 활성화
 3. "압축해제된 확장 프로그램을 로드합니다" 클릭
-4. `web-ally/dist` 폴더 선택
+4. `aura/dist` 폴더 선택
 
 ## 🎨 사용법
 
@@ -134,7 +134,7 @@ npm run build
 ## 🏗️ 프로젝트 구조
 
 ```
-web-ally/
+aura/
 ├── src/
 │   ├── content.ts              # 메인 로직
 │   ├── scanner/
