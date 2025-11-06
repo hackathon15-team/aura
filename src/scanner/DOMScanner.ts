@@ -181,11 +181,11 @@ export class DOMScanner {
           const parent = element.parentElement;
 
           // Check if link text is short/meaningless and parent has additional context
-          if (parent && linkText.length > 0 && linkText.length < 10) {
+          if (parent) {
             const parentText = parent.textContent?.trim() || '';
             const hasAdditionalContext = parentText.length > linkText.length + 2;
 
-            if (hasAdditionalContext) {
+            if (hasAdditionalContext && linkText.length < 10) {
               issues.push({
                 element,
                 type: IssueType.ANCHOR_NEEDS_CONTEXT,
