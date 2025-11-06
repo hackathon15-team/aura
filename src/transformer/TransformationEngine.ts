@@ -55,6 +55,12 @@ export class TransformationEngine {
           log = await this.connectLabelToInput(issue.element as HTMLLabelElement);
           break;
 
+        case IssueType.MISSING_ARIA_LABEL:
+          if (issue.element.tagName.toLowerCase() === 'iframe') {
+            log = await this.addIframeTitle(issue.element as HTMLIFrameElement);
+          }
+          break;
+
         default:
           break;
       }
@@ -444,6 +450,42 @@ export class TransformationEngine {
       element: this.getElementDescription(label),
       before,
       after: `for="${input.id}"`
+    };
+  }
+
+  private async addIframeTitle(iframe: HTMLIFrameElement): Promise<TransformationLog | null> {
+    if (iframe.hasAttribute('title') || iframe.hasAttribute('aria-label')) {
+      return null;
+    }
+
+    const src = iframe.getAttribute('src') || '';
+    let title = '';
+
+    if (src.includes('youtube.com') || src.includes('youtu.be')) {
+      title = 'YouTube 동영상';
+    } else if (src.includes('vimeo.com')) {
+      title = 'Vimeo 동영상';
+    } else if (src.includes('google.com/maps')) {
+      title = 'Google Maps';
+    } else if (src) {
+      try {
+        const url = new URL(src);
+        title = `${url.hostname} 콘텐츠`;
+      } catch {
+        title = '임베디드 콘텐츠';
+      }
+    } else {
+      title = '임베디드 콘텐츠';
+    }
+
+    iframe.setAttribute('title', title);
+
+    return {
+      type: 'iframe 접근성',
+      description: 'iframe에 title 속성 추가',
+      element: this.getElementDescription(iframe),
+      before: 'title 없음',
+      after: `title="${title}"`
     };
   }
 

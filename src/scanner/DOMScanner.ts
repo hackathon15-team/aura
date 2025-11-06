@@ -87,6 +87,17 @@ export class DOMScanner {
 
       const tagName = element.tagName.toLowerCase();
 
+      if (tagName === 'iframe') {
+        if (!element.hasAttribute('title') && !element.hasAttribute('aria-label')) {
+          issues.push({
+            element,
+            type: IssueType.MISSING_ARIA_LABEL,
+            priority: Priority.P0,
+            description: 'iframe missing title or aria-label',
+          });
+        }
+      }
+
       const isClickable = this.isElementClickable(element);
       if (isClickable) {
         const isValidClickableElement = ['div', 'span', 'section', 'article', 'li'].includes(tagName);
